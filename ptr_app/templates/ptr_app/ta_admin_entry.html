@@ -1,0 +1,96 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Admin Entry — Tooling Admin{% endblock %}
+{% block breadcrumb %}Tooling Admin / Admin Entry{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">ADMIN ENTRY</h2>
+</div>
+
+<div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border: 1px solid var(--clr-border); border-radius: 4px; background-color: #fff; margin-bottom: 24px; max-width: 800px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+        <select id="global-unit-select" class="form-control form-select" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+            <option value="">All Units</option>
+            <option value="ASMIPL">ASMIPL</option>
+            <option value="ASYM">ASYM</option>
+        </select>
+    </div>
+</div>
+
+<form method="post" onsubmit="var u = document.getElementById('global-unit-select').value; if(!u){ alert('Please select a Unit before submitting.'); return false; } document.getElementById('machine-hidden-unit').value = u;">
+    {% csrf_token %}
+    <input type="hidden" name="unit" id="machine-hidden-unit" value="">
+    <div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border); margin-bottom: 32px; max-width: 800px;">
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600; color: #64748b;">Machine Model Entry</span>
+            <a href="{% url 'ta_admin_entry_view_machine' %}" class="btn btn-outline" style="padding: 4px 12px; font-size: 12px; color: #3b82f6; border-color: #3b82f6;">
+                <span class="material-icons-outlined" style="font-size: 14px; margin-right: 4px; vertical-align: middle;">visibility</span> View Data
+            </a>
+        </div>
+        <div style="padding: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Model</label>
+                    {{ machine_form.model }}
+                </div>
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Machine Model Description</label>
+                    {{ machine_form.description }}
+                </div>
+            </div>
+            <div style="margin-top: 24px; text-align: right;">
+                <button type="submit" name="machine_model_submit" class="btn btn-primary" style="background-color: #22c55e; border-color: #22c55e; padding: 8px 24px;">Submit</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Type of Machine Form -->
+<form method="post" onsubmit="var u = document.getElementById('global-unit-select').value; if(!u){ alert('Please select a Unit before submitting.'); return false; } document.getElementById('type-hidden-unit').value = u;">
+    {% csrf_token %}
+    <input type="hidden" name="unit" id="type-hidden-unit" value="">
+    <div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border); max-width: 800px;">
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600; color: #64748b;">Type of Machine</span>
+            <a href="{% url 'ta_admin_entry_view_type' %}" class="btn btn-outline" style="padding: 4px 12px; font-size: 12px; color: #3b82f6; border-color: #3b82f6;">
+                <span class="material-icons-outlined" style="font-size: 14px; margin-right: 4px; vertical-align: middle;">visibility</span> View Data
+            </a>
+        </div>
+        <div style="padding: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Type of Machine</label>
+                    {{ type_form.type_of_machine }}
+                </div>
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Description</label>
+                    {{ type_form.description }}
+                </div>
+            </div>
+            <div style="margin-top: 24px; text-align: right;">
+                <button type="submit" name="type_of_machine_submit" class="btn btn-primary" style="background-color: #22c55e; border-color: #22c55e; padding: 8px 24px;">Submit</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const unitSelect = document.getElementById("global-unit-select");
+    if (!unitSelect) return;
+    
+    // Auto-load last selected unit
+    const savedUnit = localStorage.getItem("adminEntrySelectedUnit");
+    if (savedUnit) {
+        unitSelect.value = savedUnit;
+    }
+    
+    // Save chosen unit on change
+    unitSelect.addEventListener("change", function() {
+        localStorage.setItem("adminEntrySelectedUnit", this.value);
+    });
+});
+</script>
+{% endblock %}

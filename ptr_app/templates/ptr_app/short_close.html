@@ -1,0 +1,142 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Short Close — PTR System{% endblock %}
+{% block breadcrumb %}Short Close{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">SHORT CLOSE</h2>
+</div>
+
+<!-- ══════ Unit Selection Toolbar ══════ -->
+<div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border: 1px solid var(--clr-border); border-radius: 4px; background-color: #fff; margin-bottom: 24px; max-width: 600px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+        <select id="unitSelect" class="form-control form-select" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+            <option value="">All Units</option>
+            <option value="ASMIPL">ASMIPL</option>
+            <option value="ASYM">ASYM</option>
+        </select>
+    </div>
+</div>
+
+<!-- ══════ Short Close Form ══════ -->
+<form method="post" id="shortCloseForm">
+    {% csrf_token %}
+
+    <div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border); max-width: 600px;">
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+            <span style="font-size: 13px; font-weight: 600; color: #64748b;">Short Close PTR</span>
+        </div>
+        <div style="padding: 24px;">
+            <!-- Select PTR -->
+            <div class="form-group-compact" style="margin-bottom: 24px;">
+                <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 6px; display: block;">Select PTR No.</label>
+                <select id="ptrSelect" name="ptr_id" class="form-control form-select" style="width: 100%;" required>
+                    <option value="">-- Select PTR --</option>
+                </select>
+            </div>
+
+            <!-- PTR Info Card (shown after selection) -->
+            <div id="ptrInfoCard" style="display: none; padding: 16px; background-color: #fef2f2; border-radius: 6px; border: 1px dashed #fca5a5; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span class="material-icons-outlined" style="font-size: 18px; color: #dc2626;">warning</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #dc2626;">Short Close Confirmation</span>
+                </div>
+                <p style="font-size: 12px; color: #7f1d1d; margin: 0;">
+                    You are about to <strong>Short Close</strong> PTR <strong id="ptrInfoNo"></strong>. This action will permanently set the status to <strong>-2 (Short Closed)</strong> and cannot be undone.
+                </p>
+            </div>
+
+            <!-- Submit -->
+            <div style="text-align: right;">
+                <button type="submit" class="btn btn-primary" id="submitBtn" style="background-color: #ef4444; border-color: #ef4444; padding: 10px 24px; font-weight: 500;" disabled>
+                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle; margin-right: 6px;">cancel</span>Short Close
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Include Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+.select2-container .select2-selection--single {
+    height: 38px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 36px !important;
+    font-size: 12px;
+    color: #334155;
+    padding-left: 12px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const unitSelect = document.getElementById("unitSelect");
+    const ptrSelect = $("#ptrSelect");
+    const submitBtn = document.getElementById("submitBtn");
+    const ptrInfoCard = document.getElementById("ptrInfoCard");
+    const ptrInfoNo = document.getElementById("ptrInfoNo");
+
+    // Init Select2
+    ptrSelect.select2({ width: "100%", placeholder: "-- Select PTR --", allowClear: true });
+
+    // ── Load PTRs based on unit ──
+    function loadPtrs() {
+        const unit = unitSelect.value;
+        const url = "/api/active-ptrs/?unit=" + encodeURIComponent(unit);
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                ptrSelect.empty().append('<option value="">-- Select PTR --</option>');
+                data.ptrs.forEach(ptr => {
+                    ptrSelect.append(new Option(ptr.ptrno, ptr.id));
+                });
+                ptrSelect.val(null).trigger("change");
+                ptrInfoCard.style.display = "none";
+                submitBtn.disabled = true;
+            });
+    }
+
+    // ── PTR selection change ──
+    ptrSelect.on("change", function() {
+        const val = $(this).val();
+        const text = $(this).find("option:selected").text();
+        if (val) {
+            ptrInfoNo.textContent = text;
+            ptrInfoCard.style.display = "block";
+            submitBtn.disabled = false;
+        } else {
+            ptrInfoCard.style.display = "none";
+            submitBtn.disabled = true;
+        }
+    });
+
+    // ── Unit change reloads PTRs ──
+    unitSelect.addEventListener("change", loadPtrs);
+
+    // ── Form confirmation ──
+    document.getElementById("shortCloseForm").addEventListener("submit", function(e) {
+        const text = ptrSelect.find("option:selected").text();
+        if (!confirm("Are you sure you want to Short Close " + text + "? This action cannot be undone.")) {
+            e.preventDefault();
+        }
+    });
+
+    // ── Initial load ──
+    loadPtrs();
+});
+</script>
+{% endblock %}

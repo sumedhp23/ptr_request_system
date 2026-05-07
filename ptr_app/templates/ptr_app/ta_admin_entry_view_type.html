@@ -1,0 +1,107 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}View Type of Machine Data — Admin Entry{% endblock %}
+{% block breadcrumb %}Tooling Admin / Admin Entry / View Type of Machine{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">TYPE OF MACHINE DATA</h2>
+    <a href="{% url 'ta_admin_entry' %}" class="btn btn-outline" style="padding: 6px 16px; font-size: 13px; color: #475569; border-color: #cbd5e1;">
+        <span class="material-icons-outlined" style="font-size: 16px; margin-right: 4px; vertical-align: middle;">arrow_back</span> Back to Form
+    </a>
+</div>
+
+<div class="card table-card" style="margin-bottom: 32px;">
+    <!-- Filter Toolbar -->
+    <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--clr-border); background-color: #fff;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+            <select class="form-control form-select unit-filter" data-target="typeTable" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+                <option value="">All Units</option>
+                <option value="ASMIPL">ASMIPL</option>
+                <option value="ASYM">ASYM</option>
+            </select>
+        </div>
+        <div style="position: relative;">
+            <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+            <input type="text" class="form-control search-input" data-target="typeTable" style="width: 250px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search type of machines...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="approval-table search-table" id="typeTable" style="min-width: 800px; font-size: 13px;">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">ID</th>
+                    <th style="width: auto;">Unit</th>
+                    <th style="width: auto;">Type of Machine</th>
+                    <th style="width: auto;">Description</th>
+                    <th style="width: 150px; text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for type_obj in types %}
+                <tr data-unit="{{ type_obj.unit }}">
+                    <td>{{ type_obj.id }}</td>
+                    <td>{{ type_obj.unit }}</td>
+                    <td>{{ type_obj.type_of_machine }}</td>
+                    <td>{{ type_obj.description }}</td>
+                    <td style="display: flex; justify-content: center; gap: 8px;">
+                        <a href="{% url 'ta_edit_type_machine' type_obj.id %}" class="btn btn-action" style="background-color: #3b82f6; color: white; padding: 4px 12px; text-decoration: none;">Edit</a>
+                        <form method="post" action="{% url 'ta_delete_type_machine' type_obj.id %}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to completely delete this entry?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-action" style="background-color: #ef4444; color: white; padding: 4px 12px; border: none; cursor: pointer;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #64748b; padding: 24px;">No Types of Machine found in the database. Add some from the Admin Entry page.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Independent Unit and Search Filters
+    function applyFilters(targetId) {
+        const table = document.getElementById(targetId);
+        if (!table) return;
+        
+        // Find the unit select and search input corresponding to this table
+        const unitVal = document.querySelector(`.unit-filter[data-target="${targetId}"]`).value;
+        const searchVal = document.querySelector(`.search-input[data-target="${targetId}"]`).value.toLowerCase().trim();
+        
+        const rows = table.querySelectorAll('tbody tr:not(.no-results-row)');
+        rows.forEach(row => {
+            const rowUnit = row.getAttribute('data-unit') || '';
+            const textMatch = row.innerText.toLowerCase().includes(searchVal);
+            const unitMatch = !unitVal || rowUnit === unitVal;
+            
+            if (textMatch && unitMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Attach event listeners for unit dropdowns
+    document.querySelectorAll('.unit-filter').forEach(select => {
+        select.addEventListener('change', function() {
+            applyFilters(this.getAttribute('data-target'));
+        });
+    });
+
+    // Attach event listeners for search inputs
+    document.querySelectorAll('.search-input').forEach(input => {
+        input.addEventListener('input', function() {
+            applyFilters(this.getAttribute('data-target'));
+        });
+    });
+});
+</script>
+{% endblock %}

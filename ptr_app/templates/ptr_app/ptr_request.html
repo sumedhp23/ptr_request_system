@@ -1,0 +1,413 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}PTR/TCMR Request — Tool Engineering{% endblock %}
+{% block breadcrumb %}PTR Request{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">PTR / TCMR Request</h2>
+    <p class="page-subtitle">Fill out the form below to submit a new process tool or TCMR request.</p>
+</div>
+
+<div class="card form-card">
+    <form method="post" class="ptr-form" id="ptrForm">
+        {% csrf_token %}
+
+        <!-- ═══ Unit Selector (Step 1) ═══ -->
+        <div class="form-section" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 2px solid var(--clr-border);">
+            <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+                    <label for="id_unit" class="required" style="font-weight: 600;">Select Unit</label>
+                    {{ form.unit }}
+                </div>
+                <div class="form-check checkbox-xl" style="margin-top: 16px;">
+                    {{ form.istcmr }}
+                    <label class="form-check-label" for="id_istcmr">
+                        TCMR Request
+                    </label>
+                </div>
+                <div class="rev-info-group" style="display: flex; gap: 16px; margin-left: auto;">
+                    <div class="form-group row-inline" style="margin-bottom: 0;">
+                        <label>Current Rev No.</label>
+                        {{ form.current_rev_no }}
+                    </div>
+                    <div class="form-group row-inline" style="margin-bottom: 0;">
+                        <label>Last Obsolete Date</label>
+                        {{ form.last_obsolete_date }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Main Form Grid (disabled until unit selected) ═══ -->
+        <div id="mainFormArea" style="opacity: 0.4; pointer-events: none;">
+            <div class="form-grid">
+
+                <!-- Left Column -->
+                <div class="form-col left-col">
+                    <div class="form-group" id="tcmrTinoGroup" style="display: none; background-color: #fef3c7; padding: 12px; border-radius: 6px; border: 1px solid #fde68a; margin-bottom: 24px;">
+                        <label for="tcmr_tino" class="required" style="color: #92400e; font-weight: 700; margin-bottom: 8px;">Select Approved Obsolete TINO (TCMR Source)</label>
+                        <select class="form-control form-select select2" id="tcmr_tino" name="tino_source" style="width: 100%;">
+                            <option value="">-- Select TINO --</option>
+                            {% for t in tcmr_tinos %}
+                            <option value="{{ t }}">{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_deptid" class="required">From Department</label>
+                        <select class="form-control form-select" id="id_deptid" name="deptid" required>
+                            <option value="">-- Select Department --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_partid" class="required">Part No.</label>
+                        <select class="form-control form-select" id="id_partid" name="partid" required>
+                            <option value="">-- Select Part --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Customer</label>
+                        {{ form.customer_display }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Project Name</label>
+                        {{ form.project_display }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>FG Part Name</label>
+                        {{ form.fg_part_name_display }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Part Name</label>
+                        {{ form.partname_display }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_drawing" class="required">Drawing No.</label>
+                        {{ form.drawing }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_req_path">Draft Process & Input Models Path</label>
+                        {{ form.req_path }}
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="form-col right-col">
+                    <div class="form-group split-group">
+                        <div class="half">
+                            <label for="id_dotr" class="required">Date of Tooling Reqd (Project Plan)</label>
+                            {{ form.dotr }}
+                        </div>
+                        <div class="half">
+                            <label for="id_earlydatereason">Reason</label>
+                            {{ form.earlydatereason }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_process" class="required">Process Name | No.</label>
+                        {{ form.process }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_ncsno">N.C Set Up Sheet No(s)</label>
+                        {{ form.ncsno }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_bqty" class="required">Qty / Annum</label>
+                        {{ form.bqty }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_mfg">MR / PFD Sheet No(s)</label>
+                        {{ form.mfg }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_requestremarks">Remarks from Requester</label>
+                        {{ form.requestremarks }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_mmodel" class="required">Machine Model</label>
+                        <select class="form-control form-select" id="id_mmodel" name="mmodel" required>
+                            <option value="">-- Select Machine Model --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_typemachine" class="required">Type of Machine</label>
+                        <select class="form-control form-select" id="id_typemachine" name="typemachine" required>
+                            <option value="">-- Select Type --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden fields for actual IDs -->
+        {{ form.customerid }}
+        {{ form.projectid }}
+        {{ form.partcode }}
+        {{ form.partname }}
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-outline" id="clearBtn">Clear</button>
+            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                <span class="material-icons-outlined">send</span> Submit Request
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Include Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+/* Clean up select2 styling to match standard form inputs */
+.select2-container .select2-selection--single {
+    height: 38px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 36px !important;
+    font-size: 12px;
+    color: #334155;
+    padding-left: 12px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const unitSelect = document.getElementById('id_unit');
+    const deptSelect = document.getElementById('id_deptid');
+    const partSelect = document.getElementById('id_partid');
+    const mainFormArea = document.getElementById('mainFormArea');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // Auto-fill display fields
+    const customerDisplay = document.getElementById('id_customer_display');
+    const projectDisplay = document.getElementById('id_project_display');
+    const fgPartDisplay = document.getElementById('id_fg_part_name_display');
+    const partNameDisplay = document.getElementById('id_partname_display');
+
+    // Hidden ID fields
+    const customerIdField = document.getElementById('id_customerid');
+    const projectIdField = document.getElementById('id_projectid');
+    const partcodeField = document.getElementById('id_partcode');
+    const partnameField = document.getElementById('id_partname');
+
+    // Machine selects
+    const mmodelSelect = document.getElementById('id_mmodel');
+    const typemachineSelect = document.getElementById('id_typemachine');
+
+    // TCMR variables
+    const isTcmrCheckbox = document.getElementById('id_istcmr');
+    const tcmrTinoGroup = document.getElementById('tcmrTinoGroup');
+    const tcmrTinoSelect = document.getElementById('tcmr_tino');
+
+    // Init Select2
+    $(tcmrTinoSelect).select2({
+        width: '100%'
+    });
+
+    // ── TCMR Checkbox Toggle ──
+    isTcmrCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            tcmrTinoGroup.style.display = 'block';
+        } else {
+            tcmrTinoGroup.style.display = 'none';
+            // Also reset tcmr_tino when hiding
+            $(tcmrTinoSelect).val(null).trigger('change.select2');
+            document.getElementById('id_current_rev_no').value = 'NA';
+            document.getElementById('id_last_obsolete_date').value = 'NA';
+        }
+    });
+
+    // ── TINO Auto-Fill Logic ──
+    $(tcmrTinoSelect).on('change', function() {
+        const tino = $(this).val();
+        if (!tino) return;
+        
+        fetch('/api/tcmr-autofill/?tino=' + encodeURIComponent(tino))
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                // Update Rev Info fields
+                document.getElementById('id_current_rev_no').value = data.current_rev_no;
+                document.getElementById('id_last_obsolete_date').value = data.last_obsolete_date;
+                
+                // Form fields (we assume dept/part dropdowns are already populated by the Unit selection)
+                if (data.deptid) deptSelect.value = data.deptid;
+                if (data.partid) {
+                    partSelect.value = data.partid;
+                    // Trigger part to autofill customer/project data
+                    partSelect.dispatchEvent(new Event('change'));
+                }
+                
+                if (data.process) document.getElementById('id_process').value = data.process;
+                if (data.drawing) document.getElementById('id_drawing').value = data.drawing;
+                if (data.dotr) document.getElementById('id_dotr').value = data.dotr;
+                if (data.ncsno) document.getElementById('id_ncsno').value = data.ncsno;
+                if (data.bqty) document.getElementById('id_bqty').value = data.bqty;
+                if (data.mfg) document.getElementById('id_mfg').value = data.mfg;
+                if (data.requestremarks) document.getElementById('id_requestremarks').value = data.requestremarks;
+                if (data.mmodel) mmodelSelect.value = data.mmodel;
+                if (data.typemachine) typemachineSelect.value = data.typemachine;
+                if (data.req_path) document.getElementById('id_req_path').value = data.req_path;
+            });
+    });
+
+    // ── STEP 1: Unit change → load departments, parts, machines ──
+    unitSelect.addEventListener('change', function() {
+        const unit = this.value;
+
+        if (!unit) {
+            mainFormArea.style.opacity = '0.4';
+            mainFormArea.style.pointerEvents = 'none';
+            submitBtn.disabled = true;
+            resetAllFields();
+            return;
+        }
+
+        // Enable form area
+        mainFormArea.style.opacity = '1';
+        mainFormArea.style.pointerEvents = 'auto';
+        submitBtn.disabled = false;
+
+        // Load departments
+        fetch('/api/departments/?unit=' + unit)
+            .then(r => r.json())
+            .then(data => {
+                deptSelect.innerHTML = '<option value="">-- Select Department --</option>';
+                data.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.dID;
+                    opt.textContent = d.DeptName;
+                    deptSelect.appendChild(opt);
+                });
+            });
+
+        // Load parts
+        fetch('/api/parts/?unit=' + unit)
+            .then(r => r.json())
+            .then(data => {
+                partSelect.innerHTML = '<option value="">-- Select Part --</option>';
+                data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.PartID;
+                    opt.textContent = p.PartName + (p.PartDesc ? ' — ' + p.PartDesc : '');
+                    partSelect.appendChild(opt);
+                });
+            });
+
+        // Load machine models & types
+        fetch('/api/machines/?unit=' + unit)
+            .then(r => r.json())
+            .then(data => {
+                mmodelSelect.innerHTML = '<option value="">-- Select Machine Model --</option>';
+                data.machine_models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.model;
+                    opt.textContent = m.model;
+                    mmodelSelect.appendChild(opt);
+                });
+
+                typemachineSelect.innerHTML = '<option value="">-- Select Type --</option>';
+                data.machine_types.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.type_of_machine;
+                    opt.textContent = t.type_of_machine;
+                    typemachineSelect.appendChild(opt);
+                });
+            });
+
+        // Clear auto-fill fields
+        clearAutoFill();
+    });
+
+    // ── STEP 3: Part change → auto-fill customer, project, part name ──
+    partSelect.addEventListener('change', function() {
+        const partId = this.value;
+
+        if (!partId) {
+            clearAutoFill();
+            return;
+        }
+
+        fetch('/api/part-detail/?part_id=' + partId)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    clearAutoFill();
+                    return;
+                }
+                customerDisplay.value = data.customer_name;
+                projectDisplay.value = data.project_name;
+                fgPartDisplay.value = data.fg_part_name;
+                partNameDisplay.value = data.partname;
+
+                // Set hidden fields
+                customerIdField.value = data.customer_id;
+                projectIdField.value = data.project_id;
+                partcodeField.value = data.partcode;
+                partnameField.value = data.partname;
+            });
+    });
+
+    // ── Clear button ──
+    clearBtn.addEventListener('click', function() {
+        unitSelect.value = '';
+        mainFormArea.style.opacity = '0.4';
+        mainFormArea.style.pointerEvents = 'none';
+        submitBtn.disabled = true;
+        resetAllFields();
+    });
+
+    function clearAutoFill() {
+        customerDisplay.value = '';
+        projectDisplay.value = '';
+        fgPartDisplay.value = '';
+        partNameDisplay.value = '';
+        customerIdField.value = '';
+        projectIdField.value = '';
+        partcodeField.value = '';
+        partnameField.value = '';
+    }
+
+    function resetAllFields() {
+        deptSelect.innerHTML = '<option value="">-- Select Department --</option>';
+        partSelect.innerHTML = '<option value="">-- Select Part --</option>';
+        mmodelSelect.innerHTML = '<option value="">-- Select Machine Model --</option>';
+        typemachineSelect.innerHTML = '<option value="">-- Select Type --</option>';
+        clearAutoFill();
+        // Clear all manual input fields
+        document.querySelectorAll('#mainFormArea input:not([readonly]), #mainFormArea textarea').forEach(el => {
+            el.value = '';
+        });
+    }
+});
+</script>
+{% endblock %}

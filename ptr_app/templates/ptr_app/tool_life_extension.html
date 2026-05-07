@@ -1,0 +1,107 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Tool Life Extension{% endblock %}
+{% block breadcrumb %}Preventive Maintenance / Tool Life Extension{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">TOOL LIFE EXTENSION</h2>
+</div>
+
+<div class="card table-card" style="margin-bottom: 24px;">
+    <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+                <select id="unitFilter" class="form-control form-select" style="width: 140px; padding: 4px 8px; font-size: 12px; height: 32px;" onchange="window.location.href='?unit='+this.value">
+                    <option value="">All Units</option>
+                    <option value="ASMIPL" {% if selected_unit == 'ASMIPL' %}selected{% endif %}>ASMIPL</option>
+                    <option value="ASYM" {% if selected_unit == 'ASYM' %}selected{% endif %}>ASYM</option>
+                </select>
+            </div>
+            <button class="btn btn-outline" style="color: #16a34a; border-color: #16a34a; display: flex; align-items: center; gap: 4px; padding: 4px 12px; font-size: 12px;">
+                <span class="material-icons-outlined" style="font-size: 16px;">table_view</span> Export To Excel
+            </button>
+        </div>
+        
+        <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: flex-end;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="position: relative;">
+                    <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+                    <input type="text" id="liveSearchInput" class="form-control" style="width: 250px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search across all columns...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="approval-table" style="min-width: 1200px; font-size: 11px;">
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>Unit</th>
+                    <th style="white-space: nowrap;">PTR No.</th>
+                    <th>TINo.</th>
+                    <th>Tool Recd Date</th>
+                    <th>Tool Material</th>
+                    <th>PM Freq</th>
+                    <th>Tool Life</th>
+                    <th>Tool Expiry Date</th>
+                    <th style="width: 100px; text-align: center;">History Card</th>
+                    <th style="width: 250px; text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in expired_rows %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><span style="font-weight: 500;">{{ row.ptr.unit|default:"—" }}</span></td>
+                    <td style="white-space: nowrap;"><span style="font-weight: 500; color: #1e40af;">{{ row.ptr.ptrno|default:"—" }}</span></td>
+                    <td><span style="font-weight: 500;">{{ row.tino|default:"—" }}</span></td>
+                    <td>{{ row.rcvdate|date:"d/m/Y" }}</td>
+                    <td>{{ row.material|default:"—" }}</td>
+                    <td>{{ row.freq|default:"—" }}</td>
+                    <td>{{ row.toollife|default:"—" }}</td>
+                    <td><span style="color: #dc2626; font-weight: 500;">{{ row.expiry_date|date:"d/m/Y" }}</span></td>
+                    <td style="text-align: center;">
+                        <a href="{% url 'pm_plan_detail' row.ptr.pk %}?target={{ row.expiry_date|date:'Y-m-d' }}" class="btn btn-action" style="background-color: #f59e0b; color: white; display: inline-flex; align-items: center; justify-content: center;">History Card</a>
+                    </td>
+                    <td style="text-align: center; display: flex; gap: 8px; justify-content: center;">
+                        <a href="{% url 'tool_life_extend_detail' row.ptr.pk %}" class="btn btn-action" style="background-color: #3b82f6; color: white;">Tool Life Extend</a>
+                        <button type="button" class="btn btn-action" style="background-color: #ef4444; color: white;" onclick="alert('Scrap & Order New functionality configuration will be handled soon.')">Scrap & Order New</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #94a3b8; padding: 24px;">No expired tools pending extension.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .btn-action { display: inline-block; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; font-weight: 500; font-size: 11px; padding: 4px 10px; }
+    .btn-action:hover { opacity: 0.9; }
+    .approval-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
+    .approval-table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    .approval-table tbody tr:hover { background-color: #f8fafc; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const liveSearchInput = document.getElementById("liveSearchInput");
+        if(liveSearchInput) {
+            liveSearchInput.addEventListener("keyup", function() {
+                var value = this.value.toLowerCase();
+                var rows = document.querySelectorAll(".approval-table tbody tr");
+                rows.forEach(function(row) {
+                    var text = row.textContent.toLowerCase();
+                    row.style.display = text.indexOf(value) > -1 ? "" : "none";
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

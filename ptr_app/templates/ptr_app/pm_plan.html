@@ -1,0 +1,131 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}PM Plan — PTR System{% endblock %}
+{% block breadcrumb %}Preventive Maintenance / PM Plan{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">PM PLAN</h2>
+</div>
+
+<!-- Table Section -->
+<div class="card table-card" style="margin-bottom: 24px;">
+    <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+                <select id="unitFilter" class="form-control form-select" style="width: 140px; padding: 4px 8px; font-size: 12px; height: 32px;" onchange="updateFilters()">
+                    <option value="">All Units</option>
+                    <option value="ASMIPL" {% if selected_unit == 'ASMIPL' %}selected{% endif %}>ASMIPL</option>
+                    <option value="ASYM" {% if selected_unit == 'ASYM' %}selected{% endif %}>ASYM</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Timing:</label>
+                <select id="timingFilter" class="form-control form-select" style="width: 140px; padding: 4px 8px; font-size: 12px; height: 32px;" onchange="updateFilters()">
+                    <option value="current" {% if timing == 'current' %}selected{% endif %}>Current Month</option>
+                    <option value="next" {% if timing == 'next' %}selected{% endif %}>Next Month</option>
+                    <option value="past" {% if timing == 'past' %}selected{% endif %}>Past Month</option>
+                </select>
+            </div>
+            <button class="btn btn-outline" style="color: #16a34a; border-color: #16a34a; display: flex; align-items: center; gap: 4px; padding: 4px 12px; font-size: 12px;">
+                <span class="material-icons-outlined" style="font-size: 16px;">table_view</span> Export To Excel
+            </button>
+        </div>
+        
+        <script>
+            function updateFilters() {
+                var unit = document.getElementById('unitFilter').value;
+                var timing = document.getElementById('timingFilter').value;
+                window.location.href = '?unit=' + unit + '&timing=' + timing;
+            }
+        </script>
+        
+        <!-- Standardized Search Toolbar -->
+        <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: flex-end;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="position: relative;">
+                    <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+                    <input type="text" id="liveSearchInput" class="form-control" style="width: 250px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search across all columns...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="approval-table" style="min-width: 1200px; font-size: 11px;">
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>Unit</th>
+                    <th style="white-space: nowrap;">PTR No.</th>
+                    <th>TINo.</th>
+                    <th>Received Date</th>
+                    <th>Plan Date for Inspection</th>
+                    <th>PM Freq</th>
+                    <th>Report No.</th>
+                    <th>Trail Feedback</th>
+                    <th style="width: 100px; text-align: center;">History Card</th>
+                    <th style="width: 120px; text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in pm_rows %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><span style="font-weight: 500;">{{ row.ptr.unit|default:"—" }}</span></td>
+                    <td style="white-space: nowrap;"><span style="font-weight: 500; color: #1e40af;">{{ row.ptr.ptrno|default:"—" }}</span></td>
+                    <td><span style="font-weight: 500;">{{ row.tino|default:"—" }}</span></td>
+                    <td>{{ row.rcvdate|date:"d/m/Y" }}</td>
+                    <td><span style="color: #166534; font-weight: 600;">{{ row.plan_date|date:"d/m/Y" }}</span></td>
+                    <td>{{ row.freq|default:"—" }}</td>
+                    <td>{{ row.last_report|default:"—" }}</td>
+                    <td>{{ row.tfeedback|default:"—" }}</td>
+                    <td style="text-align: center;">
+                        <a href="{% url 'history_card' row.ptr.pk %}" target="_blank" class="btn btn-action" style="background-color: #f59e0b; color: white; display: inline-flex; align-items: center; justify-content: center;">History Card</a>
+                    </td>
+                    <td style="text-align: center;">
+                        <a href="{% url 'pm_plan_detail' row.ptr.pk %}?target={{ row.plan_date|date:'Y-m-d' }}" class="btn btn-action" style="background-color: #3b82f6; color: white; display: inline-flex; align-items: center; justify-content: center;">Update PM</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11" style="text-align: center; color: #64748b;">No matching PM Plan records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div style="padding: 12px 16px; font-size: 11px; color: #64748b; border-bottom: 1px solid var(--clr-border);">
+        Total Rows: {{ pm_rows|length }}
+    </div>
+
+    <!-- Removed pagination and static forms section to simplify layout -->
+</div>
+
+<style>
+    .btn-action { display: inline-block; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; font-weight: 500; font-size: 11px; padding: 4px 10px; }
+    .btn-action:hover { opacity: 0.9; }
+    .approval-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
+    .approval-table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    .approval-table tbody tr:hover { background-color: #f8fafc; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('liveSearchInput');
+        const tableBody = document.querySelector('.approval-table tbody');
+        if (searchInput && tableBody) {
+            const rows = tableBody.querySelectorAll('tr');
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase().trim();
+                rows.forEach(row => {
+                    const rowText = row.innerText.toLowerCase();
+                    row.style.display = rowText.includes(query) ? '' : 'none';
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Edit Machine Model — Admin Entry{% endblock %}
+{% block breadcrumb %}Tooling Admin / Admin Entry / Edit Machine Model{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">EDIT MACHINE MODEL</h2>
+    <a href="{% url 'ta_admin_entry_view_machine' %}" class="btn btn-outline" style="padding: 6px 16px; font-size: 13px; color: #475569; border-color: #cbd5e1;">
+        <span class="material-icons-outlined" style="font-size: 16px; margin-right: 4px; vertical-align: middle;">arrow_back</span> Cancel
+    </a>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="unit" value="{{ obj.unit }}">
+    <div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border); margin-bottom: 32px; max-width: 800px;">
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600; color: #64748b;">Editing Record: {{ obj.model }} ({{ obj.unit }})</span>
+        </div>
+        <div style="padding: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Model</label>
+                    {{ form.model }}
+                </div>
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Machine Model Description</label>
+                    {{ form.description }}
+                </div>
+            </div>
+            <div style="margin-top: 24px; text-align: right;">
+                <button type="submit" class="btn btn-primary" style="background-color: #3b82f6; border-color: #3b82f6; padding: 8px 24px;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

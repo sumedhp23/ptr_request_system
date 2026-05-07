@@ -1,0 +1,25 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Success — PTR System{% endblock %}
+{% block breadcrumb %}PTR Request / Success{% endblock %}
+
+{% block content %}
+<div class="success-container">
+    <div class="success-card card">
+        <div class="success-icon-wrap">
+            <span class="material-icons-outlined success-icon">check_circle</span>
+        </div>
+        <h2 class="success-title">Request Submitted Successfully!</h2>
+        <p class="success-msg">Your PTR/TCMR request has been recorded and routed for approval.</p>
+        
+        <div class="success-actions">
+            <a href="{% url 'ptr_request' %}" class="btn btn-primary">
+                <span class="material-icons-outlined">add</span> Create Another Request
+            </a>
+            <a href="#" class="btn btn-outline">
+                <span class="material-icons-outlined">dashboard</span> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

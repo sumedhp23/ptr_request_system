@@ -1,0 +1,117 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}PTR Admin — Assign Designer{% endblock %}
+{% block breadcrumb %}PTR Admin › Assign PTR-{{ ptr.pk|stringformat:"04d" }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">Tooling Admin — Assign Designer</h2>
+    <p class="page-subtitle">Review request details and assign a designer for PTR-{{ ptr.pk|stringformat:"04d" }}.</p>
+</div>
+
+<!-- ═══ Request Summary (read-only) ═══ -->
+<div class="card table-card" style="margin-bottom: 20px;">
+    <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+        <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;">Request Summary</span>
+    </div>
+    <div class="table-responsive">
+        <table class="approval-table">
+            <thead>
+                <tr>
+                    <th>Request</th>
+                    <th>Unit</th>
+                    <th>Department</th>
+                    <th>Customer</th>
+                    <th>Part No</th>
+                    <th>Part Name</th>
+                    <th>Project</th>
+                    <th>Process</th>
+                    <th>Date of Tooling Reqd</th>
+                    <th>NC Setup Sheet</th>
+                    <th>Batch QTY</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+                            {% if ptr.istcmr %}background-color: #fef3c7; color: #92400e;{% else %}background-color: #dbeafe; color: #1e40af;{% endif %}
+                        ">{% if ptr.istcmr %}TCMR{% else %}PTR{% endif %}</span>
+                    </td>
+                    <td>{{ ptr.unit }}</td>
+                    <td>{{ dept_name }}</td>
+                    <td>{{ customer_name }}</td>
+                    <td style="font-size: 11px;">{{ ptr.partcode }}</td>
+                    <td>{{ ptr.partname }}</td>
+                    <td>{{ project_name }}</td>
+                    <td>{{ ptr.process }}</td>
+                    <td>{{ ptr.dotr|date:"d/m/Y" }}</td>
+                    <td>{{ ptr.ncsno|default:"NA" }}</td>
+                    <td>{{ ptr.bqty }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ═══ Assignment Form ═══ -->
+<div class="card form-card" style="max-width: 600px;">
+    <div style="padding: 12px 16px; background-color: #f0fdf4; border-bottom: 1px solid var(--clr-border); border-radius: 6px 6px 0 0;">
+        <span style="font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase;">Assignment Details</span>
+    </div>
+
+    <form method="post" style="padding: 24px;">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>PTR Number</label>
+            <input type="text" name="ptrno" class="form-control" value="{{ ptr_number }}" readonly style="background-color: #f1f5f9; cursor: not-allowed; font-weight: 600;">
+        </div>
+
+        <div class="form-group">
+            <label for="designer" class="required">Designer</label>
+            <select name="designer" id="designer" class="form-control form-select" required>
+                <option value="">Please select</option>
+                {% for d in designers %}
+                <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="pldstartdate">Planned Start Date</label>
+            <input type="date" name="pldstartdate" id="pldstartdate" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="pldcompdate" class="required">Planned Completion Date</label>
+            <input type="date" name="pldcompdate" id="pldcompdate" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="plannedHour">Planned Hours</label>
+            <input type="number" name="plannedHour" id="plannedHour" class="form-control" min="0" placeholder="0">
+        </div>
+
+        <div class="form-group">
+            <label for="remarks">Remarks</label>
+            <textarea name="remarks" id="remarks" class="form-control" rows="3" placeholder="Enter remarks..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--clr-border); flex-wrap: wrap;">
+            <button type="submit" name="action" value="assign" class="btn-action approve" style="padding: 8px 24px; font-size: 13px;" onclick="return confirm('Assign this PTR to the selected designer?')">
+                <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">check_circle</span> Assign
+            </button>
+            <button type="submit" name="action" value="reject" class="btn-action reject" style="padding: 8px 24px; font-size: 13px;" formnovalidate onclick="return confirm('Reject this PTR?')">
+                <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">cancel</span> Reject
+            </button>
+            <button type="submit" name="action" value="shortclose" class="btn-action reject" style="padding: 8px 24px; font-size: 13px; background-color: #f59e0b; border-color: #f59e0b;" formnovalidate onclick="return confirm('Short close this PTR?')">
+                <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">block</span> Short Close
+            </button>
+            <a href="{% url 'ptr_admin_list' %}" class="btn btn-outline" style="margin-left: auto;">
+                <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">arrow_back</span> Back
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

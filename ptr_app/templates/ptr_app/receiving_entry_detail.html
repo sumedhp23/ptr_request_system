@@ -1,0 +1,120 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Receiving Entry — {{ ptr.ptrno|default:"PTR" }}{% endblock %}
+{% block breadcrumb %}Receiving Entry / {{ ptr.ptrno|default:"Request" }}{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+    <a href="{% url 'receiving_entry' %}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;">
+        <span class="material-icons-outlined" style="font-size: 18px;">arrow_back</span>
+        Back to Receiving
+    </a>
+    <h2 class="page-title" style="margin: 0;">Receiving: {{ ptr.ptrno|default:"PTR" }}</h2>
+</div>
+
+<div class="card form-card" style="padding: 24px; box-shadow: none; border: 1px solid var(--clr-border); margin-bottom: 32px;">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            <!-- Left Column (Auto-filled) -->
+            <div class="form-col left-col">
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">PTR Number</label>
+                    <input type="text" class="form-control" value="{{ ptr.ptrno|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed; font-weight: 600;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">Customer</label>
+                    <input type="text" class="form-control" value="{{ customer_name|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">Part No.</label>
+                    <input type="text" class="form-control" value="{{ ptr.partcode|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">Tool Revision</label>
+                    <input type="text" class="form-control" value="{{ ptr.toolrev|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">TINo</label>
+                    <input type="text" class="form-control" value="{% if de %}{{ de.TINo|default:'—' }}{% else %}—{% endif %}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 24px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">SUPPLIER/VENDOR:</label>
+                    {% if existing_recv %}
+                    <input type="text" class="form-control" value="{% if de %}{{ de.suplier|default:'—' }}{% else %}—{% endif %}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                    {% else %}
+                    <input type="text" name="supplier" class="form-control" value="{% if de %}{{ de.suplier|default:'' }}{% endif %}" placeholder="Enter supplier/vendor name">
+                    {% endif %}
+                </div>
+
+                {% if not existing_recv %}
+                <button type="submit" class="btn btn-primary" style="background-color: #22c55e; border-color: #22c55e; padding: 8px 24px; min-width: 100px;">Submit</button>
+                {% else %}
+                <div style="padding: 8px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 12px; color: #166534;">
+                    <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">check_circle</span> Receiving entry already submitted
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column -->
+            <div class="form-col right-col">
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">MPR NO</label>
+                    <input type="text" class="form-control" value="{% if de %}{{ de.MPRNo|default:'—' }}{% else %}—{% endif %}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">Designer:</label>
+                    <input type="text" class="form-control" value="{% if admin %}{{ admin.desginer|default:'—' }}{% else %}—{% endif %}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">Receiving Date:</label>
+                    {% if existing_recv %}
+                    <input type="text" class="form-control" value="{{ existing_recv.rcvdate|date:'d/m/Y'|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                    {% else %}
+                    <input type="date" name="rcvdate" class="form-control" required>
+                    {% endif %}
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">TOOLING VERIFICATION REPORT NUMBER</label>
+                    <input type="text" class="form-control" value="{{ tvrn }}" readonly style="background-color: #f1f5f9; cursor: not-allowed; font-weight: 600; color: #0d9488;">
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">GRN NUMBER.</label>
+                    {% if existing_recv %}
+                    <input type="text" class="form-control" value="{{ existing_recv.grnno|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                    {% else %}
+                    <input type="text" name="grnno" class="form-control" placeholder="Enter GRN number">
+                    {% endif %}
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">GRN DATE.</label>
+                    {% if existing_recv %}
+                    <input type="text" class="form-control" value="{{ existing_recv.grndate|date:'d/m/Y'|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                    {% else %}
+                    <input type="date" name="grndate" class="form-control">
+                    {% endif %}
+                </div>
+
+                <div class="form-group-compact" style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 500; color: #64748b; text-transform: uppercase;">Inspected By</label>
+                    {% if existing_recv %}
+                    <input type="text" class="form-control" value="{{ existing_recv.ModifiedBy|default:'—' }}" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                    {% else %}
+                    <input type="text" name="inspected_by" class="form-control" placeholder="Enter inspector name">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

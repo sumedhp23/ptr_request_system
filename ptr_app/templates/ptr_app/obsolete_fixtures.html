@@ -1,0 +1,164 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Obsolete Fixtures — PTR System{% endblock %}
+{% block breadcrumb %}Obsolete Fixtures{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title text-primary" style="color: #64748b; font-weight: 500; font-size: 22px;">Obsolete Requests</h2>
+</div>
+
+<div class="card table-card" style="margin-bottom: 24px; padding: 12px 16px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+        <select class="form-control form-select" id="obsUnitFilter" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+            <option value="" {% if not selected_unit %}selected{% endif %}>All Units</option>
+            <option value="ASMIPL" {% if selected_unit == 'ASMIPL' %}selected{% endif %}>ASMIPL</option>
+            <option value="ASYM" {% if selected_unit == 'ASYM' %}selected{% endif %}>ASYM</option>
+        </select>
+    </div>
+</div>
+
+<div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border);">
+    <form method="post">
+        {% csrf_token %}
+        <!-- Header -->
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+            <span style="font-size: 13px; font-weight: 600; color: #475569;">1. Obsolete Fixtures</span>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 24px;">
+            <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr; gap: 24px;">
+                
+                <!-- Column 1 -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group-compact">
+                        <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">TINO/FACODE</label>
+                        <select id="tinoSelect" class="form-control form-select select2" style="font-size: 11px; width: 100%;">
+                            <option value="">-- Select TINO --</option>
+                            {% for t in tinos %}
+                            <option value="{{ t }}">{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Sub grid for the two PTR fields underneath TINO -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group-compact">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">(ACTIVE)PTR/TCMR NO.</label>
+                            <select name="ptr_id" id="ptrSelect" class="form-control form-select select2" style="font-size: 11px; width: 100%;" required>
+                                <option value="">-- Select PTR --</option>
+                            </select>
+                        </div>
+                        <div class="form-group-compact">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">(ALL)PTR/TCMR NO.</label>
+                            <input type="text" class="form-control" value="N/A" readonly style="font-size: 11px; background-color: #f1f5f9; cursor: not-allowed;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2 -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group-compact">
+                        <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Last Obsolete Rev No.:</label>
+                        <input type="text" class="form-control" value="N/A" readonly style="background-color: #f1f5f9; font-size: 11px; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group-compact" style="flex: 1; display: flex; flex-direction: column;">
+                        <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Reason For Obsolete:</label>
+                        <textarea name="reason" class="form-control" style="flex: 1; min-height: 80px; resize: none;" required></textarea>
+                    </div>
+                </div>
+
+                <!-- Column 3 -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group-compact">
+                        <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Last Obsolete Date:</label>
+                        <input type="text" class="form-control" value="N/A" readonly style="background-color: #f1f5f9; font-size: 11px; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group-compact">
+                        <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Current Obsoleting Revision No. :</label>
+                        <input type="text" class="form-control" value="0" readonly style="background-color: #f1f5f9; font-size: 11px; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group-compact" style="flex: 1; display: flex; flex-direction: column;">
+                        <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Remarks on Disposition of Physical fixture:</label>
+                        <textarea name="remarks" class="form-control" style="flex: 1; min-height: 50px; resize: none;" required></textarea>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <!-- Footer Bar with button -->
+        <div style="padding: 16px 24px; background-color: #f8fafc; border-top: 1px solid var(--clr-border);">
+            <button type="submit" class="btn btn-primary" style="background-color: #4b89c3; border-color: #4b89c3; padding: 6px 20px; font-size: 13px; font-weight: 500;">send for approval</button>
+        </div>
+    </form>
+</div>
+
+<!-- Include Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+/* Clean up select2 styling to match standard form inputs */
+.select2-container .select2-selection--single {
+    height: 38px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 36px !important;
+    font-size: 12px;
+    color: #334155;
+    padding-left: 12px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+</style>
+
+<script>
+$(document).ready(function() {
+    // Unit filter reload
+    $('#obsUnitFilter').on('change', function() {
+        const unit = $(this).val();
+        if (unit) {
+            window.location.href = '{% url "obsolete_fixtures" %}?unit=' + unit;
+        } else {
+            window.location.href = '{% url "obsolete_fixtures" %}';
+        }
+    });
+
+    $('.select2').select2({
+        width: '100%'
+    });
+
+    $('#tinoSelect').on('change', function() {
+        const tino = $(this).val();
+        const ptrSelect = $('#ptrSelect');
+        
+        ptrSelect.empty().append('<option value="">-- Select PTR --</option>');
+        
+        if (tino) {
+            $.ajax({
+                url: '{% url "get_ptrs_by_tino" %}',
+                data: { 'tino': tino },
+                success: function(data) {
+                    if (data.ptrs && data.ptrs.length > 0) {
+                        data.ptrs.forEach(function(p) {
+                            ptrSelect.append(new Option(p.ptrno, p.id));
+                        });
+                        // If only one, select it automatically
+                        if (data.ptrs.length === 1) {
+                            ptrSelect.val(data.ptrs[0].id).trigger('change');
+                        }
+                    }
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

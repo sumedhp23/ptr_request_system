@@ -1,0 +1,300 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Change Designer — Tooling Admin{% endblock %}
+{% block breadcrumb %}Tooling Admin / Change Designer{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">CHANGE DESIGNER</h2>
+</div>
+
+<!-- ══════ Unit Selection Toolbar ══════ -->
+<div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border: 1px solid var(--clr-border); border-radius: 4px; background-color: #fff; margin-bottom: 24px; max-width: 1000px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+        <select id="unitSelect" class="form-control form-select" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+            <option value="">All Units</option>
+            <option value="ASMIPL">ASMIPL</option>
+            <option value="ASYM">ASYM</option>
+        </select>
+    </div>
+</div>
+
+<form method="post" id="changeDesignerForm">
+    {% csrf_token %}
+
+    <div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border); max-width: 1200px; margin-bottom: 24px;">
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+            <span style="font-size: 13px; font-weight: 600; color: #64748b;">Change Designer Configuration</span>
+        </div>
+        <div style="padding: 24px;">
+            <!-- ── Row 1: Select Current Designer ── -->
+            <div class="form-group-compact" style="margin-bottom: 20px; max-width: 400px;">
+                <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 6px; display: block;">Select Designer (Current)</label>
+                <select id="currentDesignerSelect" class="form-control form-select" style="width: 100%;">
+                    <option value="">-- Select Designer --</option>
+                </select>
+            </div>
+
+            <!-- ── Row 2: PTR List (loaded dynamically) ── -->
+            <div id="ptrListSection" style="display: none; margin-bottom: 24px;">
+                <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 8px; display: block;">PTR(s) Assigned to Designer</label>
+                <div style="border: 1px solid var(--clr-border); border-radius: 4px; overflow-x: auto;">
+                    <table class="approval-table" style="font-size: 12px; margin: 0; width: 100%; min-width: 750px;" id="ptrTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;">
+                                    <input type="checkbox" id="selectAllPtrs" title="Select / Deselect All">
+                                </th>
+                                <th>PTR No.</th>
+                                <th>Old Start Date</th>
+                                <th>Old Completion Date</th>
+                                <th style="text-align: center;">Keep Same</th>
+                                <th>New Start Date</th>
+                                <th>New Completion Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ptrTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noPtrsMessage" style="display: none; padding: 20px; text-align: center; color: #94a3b8; font-size: 13px; border: 1px solid var(--clr-border); border-top: none; border-radius: 0 0 4px 4px;">
+                    No active PTRs found for this designer.
+                </div>
+            </div>
+
+            <!-- ── Row 3: Assign New Designer + Submit ── -->
+            <div style="display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap;">
+                <div class="form-group-compact" style="flex: 1; min-width: 280px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 6px; display: block;">Assign to New Designer</label>
+                    <select id="newDesignerSelect" name="new_designer" class="form-control form-select" style="width: 100%;" required>
+                        <option value="">-- Select New Designer --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" style="background-color: #22c55e; border-color: #22c55e; padding: 10px 24px; font-weight: 500; white-space: nowrap;" disabled>
+                        <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle; margin-right: 6px;">autorenew</span>Change Designer : Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Include Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+.select2-container .select2-selection--single {
+    height: 38px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 36px !important;
+    font-size: 12px;
+    color: #334155;
+    padding-left: 12px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+#ptrTable tbody tr.selected-row {
+    background-color: #eff6ff;
+}
+#ptrTable tbody tr:hover {
+    background-color: #f8fafc;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const unitSelect = document.getElementById("unitSelect");
+    const currentDesignerSelect = $("#currentDesignerSelect");
+    const newDesignerSelect = $("#newDesignerSelect");
+    const ptrListSection = document.getElementById("ptrListSection");
+    const ptrTableBody = document.getElementById("ptrTableBody");
+    const noPtrsMessage = document.getElementById("noPtrsMessage");
+    const selectAllPtrs = document.getElementById("selectAllPtrs");
+    const submitBtn = document.getElementById("submitBtn");
+
+    // Init Select2
+    currentDesignerSelect.select2({ width: "100%", placeholder: "-- Select Designer --", allowClear: true });
+    newDesignerSelect.select2({ width: "100%", placeholder: "-- Select New Designer --", allowClear: true });
+
+    // ── Load designers based on unit ──
+    function loadDesigners() {
+        const unit = unitSelect.value;
+        const url = "/api/designers-by-unit/?unit=" + encodeURIComponent(unit);
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                // Rebuild current designer dropdown
+                currentDesignerSelect.empty().append('<option value="">-- Select Designer --</option>');
+                data.designers.forEach(d => {
+                    currentDesignerSelect.append(new Option(d, d));
+                });
+                currentDesignerSelect.val(null).trigger("change");
+
+                // Rebuild new designer dropdown
+                newDesignerSelect.empty().append('<option value="">-- Select New Designer --</option>');
+                data.designers.forEach(d => {
+                    newDesignerSelect.append(new Option(d, d));
+                });
+                newDesignerSelect.val(null).trigger("change");
+
+                // Reset PTR list
+                ptrListSection.style.display = "none";
+                ptrTableBody.innerHTML = "";
+                updateSubmitState();
+            });
+    }
+
+    // ── Load PTRs when current designer changes ──
+    function loadPtrs(designer) {
+        if (!designer) {
+            ptrListSection.style.display = "none";
+            ptrTableBody.innerHTML = "";
+            updateSubmitState();
+            return;
+        }
+
+        const url = "/api/ptrs-by-designer/?designer=" + encodeURIComponent(designer);
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                ptrTableBody.innerHTML = "";
+                ptrListSection.style.display = "block";
+                selectAllPtrs.checked = false;
+
+                if (data.ptrs.length === 0) {
+                    noPtrsMessage.style.display = "block";
+                    document.getElementById("ptrTable").style.display = "none";
+                } else {
+                    noPtrsMessage.style.display = "none";
+                    document.getElementById("ptrTable").style.display = "table";
+
+                    data.ptrs.forEach(ptr => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML =
+                            '<td style="text-align: center;">' +
+                                '<input type="checkbox" class="ptr-checkbox" name="ptr_ids" value="' + ptr.pa_id + '">' +
+                            '</td>' +
+                            '<td style="font-weight: 600; color: #334155;">' + ptr.ptrno + '</td>' +
+                            '<td style="color: #64748b;">' + (ptr.pldstartdate || '—') + '</td>' +
+                            '<td style="color: #64748b;">' + (ptr.pldcompdate || '—') + '</td>' +
+                            '<td style="text-align: center;">' +
+                                '<input type="checkbox" class="keep-same-checkbox" data-pa="' + ptr.pa_id + '" data-old-start="' + (ptr.pldstartdate_raw || '') + '" data-old-comp="' + (ptr.pldcompdate_raw || '') + '" title="Keep old dates">' +
+                            '</td>' +
+                            '<td><input type="date" name="new_start_' + ptr.pa_id + '" id="new_start_' + ptr.pa_id + '" class="form-control" style="font-size: 11px; padding: 4px 8px;"></td>' +
+                            '<td><input type="date" name="new_comp_' + ptr.pa_id + '" id="new_comp_' + ptr.pa_id + '" class="form-control" style="font-size: 11px; padding: 4px 8px;"></td>';
+                        ptrTableBody.appendChild(tr);
+                    });
+
+                    // Attach keep-same checkbox listeners
+                    document.querySelectorAll(".keep-same-checkbox").forEach(cb => {
+                        cb.addEventListener("change", function() {
+                            const paId = this.dataset.pa;
+                            const startInput = document.getElementById("new_start_" + paId);
+                            const compInput = document.getElementById("new_comp_" + paId);
+                            if (this.checked) {
+                                startInput.value = this.dataset.oldStart;
+                                compInput.value = this.dataset.oldComp;
+                                startInput.disabled = true;
+                                compInput.disabled = true;
+                            } else {
+                                startInput.value = "";
+                                compInput.value = "";
+                                startInput.disabled = false;
+                                compInput.disabled = false;
+                            }
+                        });
+                    });
+
+                    // Attach checkbox listeners
+                    document.querySelectorAll(".ptr-checkbox").forEach(cb => {
+                        cb.addEventListener("change", function() {
+                            this.closest("tr").classList.toggle("selected-row", this.checked);
+                            updateSubmitState();
+                        });
+                    });
+                }
+                updateSubmitState();
+            });
+    }
+
+    // ── Select All checkbox ──
+    selectAllPtrs.addEventListener("change", function() {
+        const checked = this.checked;
+        document.querySelectorAll(".ptr-checkbox").forEach(cb => {
+            cb.checked = checked;
+            cb.closest("tr").classList.toggle("selected-row", checked);
+        });
+        updateSubmitState();
+    });
+
+    // ── Enable/disable submit ──
+    function updateSubmitState() {
+        const anyChecked = document.querySelectorAll(".ptr-checkbox:checked").length > 0;
+        const hasNewDesigner = newDesignerSelect.val();
+        submitBtn.disabled = !(anyChecked && hasNewDesigner);
+    }
+
+    // ── Event bindings ──
+    unitSelect.addEventListener("change", loadDesigners);
+
+    currentDesignerSelect.on("change", function() {
+        loadPtrs($(this).val());
+    });
+
+    newDesignerSelect.on("change", function() {
+        updateSubmitState();
+    });
+
+    // ── Form validation ──
+    document.getElementById("changeDesignerForm").addEventListener("submit", function(e) {
+        const checked = document.querySelectorAll(".ptr-checkbox:checked");
+        if (checked.length === 0) {
+            e.preventDefault();
+            alert("Please select at least one PTR to reassign.");
+            return;
+        }
+        if (!newDesignerSelect.val()) {
+            e.preventDefault();
+            alert("Please select a new designer.");
+            return;
+        }
+        // Prevent assigning to the same designer
+        if (newDesignerSelect.val() === currentDesignerSelect.val()) {
+            e.preventDefault();
+            alert("New designer cannot be the same as the current designer. Please select a different designer.");
+            return;
+        }
+        // Re-enable disabled date inputs so they submit with the form
+        document.querySelectorAll(".keep-same-checkbox:checked").forEach(cb => {
+            const paId = cb.dataset.pa;
+            document.getElementById("new_start_" + paId).disabled = false;
+            document.getElementById("new_comp_" + paId).disabled = false;
+        });
+        if (!confirm("Are you sure you want to reassign " + checked.length + " PTR(s) to " + newDesignerSelect.val() + "?")) {
+            // Re-disable if cancelled
+            document.querySelectorAll(".keep-same-checkbox:checked").forEach(cb => {
+                const paId = cb.dataset.pa;
+                document.getElementById("new_start_" + paId).disabled = true;
+                document.getElementById("new_comp_" + paId).disabled = true;
+            });
+            e.preventDefault();
+        }
+    });
+
+    // ── Initial load ──
+    loadDesigners();
+});
+</script>
+{% endblock %}

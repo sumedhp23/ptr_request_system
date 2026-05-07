@@ -1,0 +1,123 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Receiving Entry — PTR System{% endblock %}
+{% block breadcrumb %}Receiving Entry{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title">Receiving Entry</h2>
+</div>
+
+<div class="card table-card" style="margin-bottom: 32px;">
+    <!-- Unit Selector + Search -->
+    <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+            <select class="form-control form-select" id="unitFilter" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+                <option value="" {% if not selected_unit %}selected{% endif %}>All Units</option>
+                <option value="ASMIPL" {% if selected_unit == "ASMIPL" %}selected{% endif %}>ASMIPL</option>
+                <option value="ASYM" {% if selected_unit == "ASYM" %}selected{% endif %}>ASYM</option>
+            </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="position: relative;">
+                <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+                <input type="text" id="liveSearchInput" class="form-control" style="width: 250px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search across all columns...">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="approval-table" id="receivingTable" style="min-width: 1400px; font-size: 11px;">
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>Request</th>
+                    <th style="white-space: nowrap;">PTR NO.</th>
+                    <th>Unit</th>
+                    <th>Part No.</th>
+                    <th>Part Name</th>
+                    <th>Project</th>
+                    <th>Drawing No</th>
+                    <th>Process</th>
+                    <th>Date of Tooling Reqd</th>
+                    <th>Batch QTY</th>
+                    <th>Plan Completion Date</th>
+                    <th>TINo</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.sno }}</td>
+                    <td>PTR</td>
+                    <td style="white-space: nowrap;"><span style="font-weight: 600; color: #1e40af;">{{ row.ptr.ptrno|default:"—" }}</span></td>
+                    <td>{{ row.ptr.unit }}</td>
+                    <td style="font-size: 11px;">{{ row.ptr.partcode }}</td>
+                    <td>{{ row.ptr.partname }}</td>
+                    <td>{{ row.project_name }}</td>
+                    <td>{{ row.ptr.drawing|default:"—" }}</td>
+                    <td>{{ row.ptr.process }}</td>
+                    <td>{{ row.ptr.dotr|date:"d/m/Y" }}</td>
+                    <td>{{ row.ptr.bqty }}</td>
+                    <td>{% if row.admin %}{{ row.admin.pldcompdate|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                    <td>{% if row.de %}{{ row.de.TINo|default:"—" }}{% else %}—{% endif %}</td>
+                    <td>
+                        {% if row.received %}
+                        <span style="display: inline-flex; align-items: center; gap: 4px; color: #16a34a; font-size: 11px; font-weight: 500;">
+                            <span class="material-icons-outlined" style="font-size: 14px;">check_circle</span> Received
+                        </span>
+                        {% else %}
+                        <a href="{% url 'receiving_entry_detail' row.ptr.pk %}" class="btn btn-action" style="background-color: #f8fafc; border: 1px solid var(--clr-border); color: #0f172a; padding: 4px 12px; text-decoration: none;">Receive</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="14" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                        <span class="material-icons-outlined" style="font-size: 36px; display: block; margin-bottom: 8px;">inbox</span>
+                        No PTRs pending receiving{% if selected_unit %} for {{ selected_unit }}{% endif %}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if rows %}
+    <div style="padding: 8px 16px; font-size: 12px; color: #64748b; border-top: 1px solid var(--clr-border);">
+        {{ rows|length }} Row{{ rows|length|pluralize }}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('unitFilter').addEventListener('change', function() {
+        const unit = this.value;
+        window.location.href = unit ? '{% url "receiving_entry" %}?unit=' + unit : '{% url "receiving_entry" %}';
+    });
+
+    const searchInput = document.getElementById('liveSearchInput');
+    const tableBody = document.querySelector('#receivingTable tbody');
+    if (searchInput && tableBody) {
+        const rows = tableBody.querySelectorAll('tr');
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+
+<style>
+    .btn-action { display: inline-block; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; font-weight: 500; font-size: 11px; padding: 4px 10px; }
+    .btn-action:hover { opacity: 0.9; }
+    .approval-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
+    .approval-table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    .approval-table tbody tr:hover { background-color: #f8fafc; }
+</style>
+{% endblock %}

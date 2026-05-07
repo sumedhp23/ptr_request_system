@@ -1,0 +1,296 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Tooling Manager — PTR System{% endblock %}
+{% block breadcrumb %}Manager Approval{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title text-primary">Tooling Manager Dashboard</h2>
+</div>
+
+<!-- ======================= PTR REQUESTS ======================= -->
+<div class="card table-card" style="margin-bottom: 32px;">
+    <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1e40af;">Pending PTR Requests</h3>
+    </div>
+    
+    <!-- Independent Toolbar for PTR -->
+    <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--clr-border); background-color: #fff;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+            <select class="form-control form-select unit-filter" data-target="ptrTable" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+                <option value="">All Units</option>
+                <option value="ASMIPL">ASMIPL</option>
+                <option value="ASYM">ASYM</option>
+            </select>
+        </div>
+        <div style="position: relative;">
+            <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+            <input type="text" class="form-control search-input" data-target="ptrTable" style="width: 250px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search PTR requests...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="approval-table search-table" id="ptrTable">
+            <thead>
+                <tr>
+                    <th>Request</th>
+                    <th>Unit</th>
+                    <th>Department</th>
+                    <th>Part No</th>
+                    <th>Part Name</th>
+                    <th>Project</th>
+                    <th>Process</th>
+                    <th>Date of Tooling Reqd</th>
+                    <th>N C Setup Sheet No.</th>
+                    <th>Batch QTY</th>
+                    <th>Edit Request</th>
+                    <th>Action</th>
+                    <th>Requestor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in ptr_rows %}
+                <tr data-unit="{{ row.ptr.unit }}">
+                    <td>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background-color: #dbeafe; color: #1e40af;">PTR</span>
+                    </td>
+                    <td>{{ row.ptr.unit }}</td>
+                    <td>{{ row.dept_name }}</td>
+                    <td>{{ row.ptr.partcode }}</td>
+                    <td>{{ row.ptr.partname }}</td>
+                    <td>{{ row.project_name }}</td>
+                    <td>{{ row.ptr.process }}</td>
+                    <td>{{ row.ptr.dotr|date:"d/m/Y" }}</td>
+                    <td>{{ row.ptr.ncsno }}</td>
+                    <td>{{ row.ptr.bqty }}</td>
+                    <td class="text-center">
+                        <a href="{% url 'manager_edit_request' row.ptr.pk %}" class="edit-link" style="color: #3b82f6; text-decoration: none; font-size: 11px; font-weight: 600;">
+                            Go To<br>Request
+                        </a>
+                    </td>
+                    <td class="action-cell" style="white-space: nowrap;">
+                        <form method="post" action="{% url 'approve_request' row.ptr.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action approve" onclick="return confirm('Approve PTR-{{ row.ptr.pk }}?')">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'reject_request' row.ptr.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action reject" onclick="return confirm('Reject PTR-{{ row.ptr.pk }}?')">Reject</button>
+                        </form>
+                    </td>
+                    <td style="font-size: 11px; color: #475569;">{{ row.requestor_email }}</td>
+                </tr>
+                {% empty %}
+                <tr class="no-results-row">
+                    <td colspan="13" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                        No pending PTR requests.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ======================= TCMR REQUESTS ======================= -->
+<div class="card table-card" style="margin-bottom: 32px;">
+    <div style="padding: 12px 16px; background-color: #fef3c7; border-bottom: 1px solid var(--clr-border);">
+        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">Pending TCMR Requests</h3>
+    </div>
+    
+    <!-- Independent Toolbar for TCMR -->
+    <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--clr-border); background-color: #fff;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+            <select class="form-control form-select unit-filter" data-target="tcmrTable" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+                <option value="">All Units</option>
+                <option value="ASMIPL">ASMIPL</option>
+                <option value="ASYM">ASYM</option>
+            </select>
+        </div>
+        <div style="position: relative;">
+            <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+            <input type="text" class="form-control search-input" data-target="tcmrTable" style="width: 250px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search TCMR requests...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="approval-table search-table" id="tcmrTable">
+            <thead>
+                <tr>
+                    <th>Request</th>
+                    <th>Unit</th>
+                    <th>Department</th>
+                    <th>Part No</th>
+                    <th>Part Name</th>
+                    <th>Project</th>
+                    <th>Process</th>
+                    <th>Date of Tooling Reqd</th>
+                    <th>N C Setup Sheet No.</th>
+                    <th>Batch QTY</th>
+                    <th>Edit Request</th>
+                    <th>Action</th>
+                    <th>Requestor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in tcmr_rows %}
+                <tr data-unit="{{ row.ptr.unit }}">
+                    <td>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background-color: #fde68a; color: #92400e;">TCMR</span>
+                    </td>
+                    <td>{{ row.ptr.unit }}</td>
+                    <td>{{ row.dept_name }}</td>
+                    <td>{{ row.ptr.partcode }}</td>
+                    <td>{{ row.ptr.partname }}</td>
+                    <td>{{ row.project_name }}</td>
+                    <td>{{ row.ptr.process }}</td>
+                    <td>{{ row.ptr.dotr|date:"d/m/Y" }}</td>
+                    <td>{{ row.ptr.ncsno }}</td>
+                    <td>{{ row.ptr.bqty }}</td>
+                    <td class="text-center">
+                        <a href="{% url 'manager_edit_request' row.ptr.pk %}" class="edit-link" style="color: #3b82f6; text-decoration: none; font-size: 11px; font-weight: 600;">
+                            Go To<br>Request
+                        </a>
+                    </td>
+                    <td class="action-cell" style="white-space: nowrap;">
+                        <form method="post" action="{% url 'approve_request' row.ptr.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action approve" onclick="return confirm('Approve TCMR-{{ row.ptr.pk }}?')">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'reject_request' row.ptr.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action reject" onclick="return confirm('Reject TCMR-{{ row.ptr.pk }}?')">Reject</button>
+                        </form>
+                    </td>
+                    <td style="font-size: 11px; color: #475569;">{{ row.requestor_email }}</td>
+                </tr>
+                {% empty %}
+                <tr class="no-results-row">
+                    <td colspan="13" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                        No pending TCMR requests.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ======================= OBSOLETE FIXTURES ======================= -->
+<div class="card table-card" style="margin-bottom: 32px;">
+    <div style="padding: 12px 16px; background-color: #fee2e2; border-bottom: 1px solid var(--clr-border);">
+        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #b91c1c;">Pending Obsolete Requests</h3>
+    </div>
+    
+    <!-- Independent Toolbar for Obsolete -->
+    <div class="table-toolbar" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--clr-border); background-color: #fff;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+            <select class="form-control form-select unit-filter" data-target="obsTable" style="width: 160px; padding: 6px 8px; font-size: 12px;">
+                <option value="">All Units</option>
+                <option value="ASMIPL">ASMIPL</option>
+                <option value="ASYM">ASYM</option>
+            </select>
+        </div>
+        <div style="position: relative;">
+            <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+            <input type="text" class="form-control search-input" data-target="obsTable" style="width: 250px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search obsolete requests...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="approval-table search-table" id="obsTable">
+            <thead>
+                <tr>
+                    <th>Request</th>
+                    <th style="white-space: nowrap;">PTR Source No.</th>
+                    <th>Unit</th>
+                    <th>Department</th>
+                    <th>Part No</th>
+                    <th>Part Name</th>
+                    <th>Reason For Obsolete</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in obsolete_rows %}
+                <tr data-unit="{{ row.ptr.unit }}">
+                    <td>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background-color: #fecaca; color: #b91c1c;">OBSOLETE</span>
+                    </td>
+                    <td style="white-space: nowrap;"><span style="font-weight: 600; color: #1e40af;">{{ row.ptr.ptrno|default:row.ptr.pk }}</span></td>
+                    <td>{{ row.ptr.unit }}</td>
+                    <td>{{ row.dept_name }}</td>
+                    <td>{{ row.ptr.partcode }}</td>
+                    <td>{{ row.ptr.partname }}</td>
+                    <td style="max-width: 300px; white-space: normal; font-size: 11px;">{{ row.rev.DescriptionRev }}</td>
+                    <td class="action-cell" style="white-space: nowrap;">
+                        <form method="post" action="{% url 'approve_obsolete' row.rev.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action approve" onclick="return confirm('Approve Obsolete request for PTR-{{ row.ptr.pk }}?')">Approve</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="no-results-row">
+                    <td colspan="8" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                        No pending obsolete requests.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Independent Unit and Search Filters
+    function applyFilters(targetId) {
+        const table = document.getElementById(targetId);
+        if (!table) return;
+        
+        // Find the unit select and search input corresponding to this table
+        const unitVal = document.querySelector(`.unit-filter[data-target="${targetId}"]`).value;
+        const searchVal = document.querySelector(`.search-input[data-target="${targetId}"]`).value.toLowerCase().trim();
+        
+        const rows = table.querySelectorAll('tbody tr:not(.no-results-row)');
+        rows.forEach(row => {
+            const rowUnit = row.getAttribute('data-unit') || '';
+            const textMatch = row.innerText.toLowerCase().includes(searchVal);
+            const unitMatch = !unitVal || rowUnit === unitVal;
+            
+            if (textMatch && unitMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Attach event listeners for unit dropdowns
+    document.querySelectorAll('.unit-filter').forEach(select => {
+        select.addEventListener('change', function() {
+            applyFilters(this.getAttribute('data-target'));
+        });
+    });
+
+    // Attach event listeners for search inputs
+    document.querySelectorAll('.search-input').forEach(input => {
+        input.addEventListener('input', function() {
+            applyFilters(this.getAttribute('data-target'));
+        });
+    });
+});
+</script>
+
+<style>
+    .btn-action { display: inline-block; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; font-weight: 500; font-size: 11px; padding: 4px 10px; }
+    .btn-action:hover { opacity: 0.9; }
+    .approval-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
+    .approval-table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    .approval-table tbody tr:hover { background-color: #f8fafc; }
+</style>
+{% endblock %}

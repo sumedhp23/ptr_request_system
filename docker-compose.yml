@@ -1,0 +1,30 @@
+services:
+  web:
+    build: .
+    container_name: ptr_web
+    ports:
+      - "8500:8500"
+    environment:
+      - DB_HOST=ptr_sqlserver
+      - DB_NAME=ptr_request_db
+      - DB_USER=sa
+      - DB_PASSWORD=PtrSecurePassword123!
+    depends_on:
+      - sqlserver
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ptr_sqlserver
+    platform: linux/amd64
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=PtrSecurePassword123!
+      - MSSQL_PID=Express
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./ptr_request_db.bak:/var/opt/mssql/backup/ptr_request_db.bak
+
+volumes:
+  sqlserver_data:

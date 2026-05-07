@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Tool History Card - {{ ptr.ptrno }}</title>
+    <!-- Injecting html2pdf capability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            padding: 20px;
+            background-color: #f1f5f9;
+            /* For viewing naturally outside print mode */
+        }
+
+        .page-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 10mm;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+
+            .page-container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+        }
+
+        /* Enforce absolute A4 sizes for PDF rendering constraints */
+        .pdf-active-container {
+            width: 190mm !important; 
+            max-width: 190mm !important;
+            min-width: 190mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            box-shadow: none !important;
+            /* Reset coordinates to prevent rendering displacement */
+            position: relative;
+            transform: none !important;
+            left: 0 !important;
+            top: 0 !important;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+
+        .header-table td {
+            vertical-align: middle;
+            height: 24px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
+        .section-header {
+            background-color: #0ff;
+            /* Exact cyan map from requirement */
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 6px;
+        }
+
+        .logo-img {
+            max-width: 300px;
+            max-height: 115px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Overlay loader to prevent users experiencing sudden flashes */
+        #loader-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #f1f5f9;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            color: #334155;
+            flex-direction: column;
+        }
+        .spinner {
+            border: 4px solid #cbd5e1;
+            border-top: 4px solid #0ea5e9;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body>
+    <!-- Automated execution status overlay protecting raw layouts -->
+    <div id="loader-overlay">
+        <div class="spinner"></div>
+        <div>Generating PDF Document...</div>
+    </div>
+
+    <div class="page-container" id="printable-area">
+
+        <!-- HEADER SECTION -->
+        <table class="header-table">
+            <tr>
+                <td rowspan="2" style="width: 30%; text-align: center; vertical-align: middle;">
+                    <img src="{% static 'images/aequs_logo.png' %}" class="logo-img" alt="AEQUS Logo">
+                </td>
+                <td class="font-bold" style="width: 45%;">
+                    AEROSTRUCTURES MANUFACTURING<br>INDIA PVT LTD & AEQUS PVT LTD.
+                </td>
+                <td rowspan="2" style="width: 25%;">
+                    <div class="font-bold">Tooling Release<br>Notice Date :</div>
+                    <div style="margin-top: 15px;"></div>
+                </td>
+            </tr>
+            <tr>
+                <td class="font-bold" style="text-align: center; font-size: 13px;">TOOL HISTORY CARD</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Part Name</td>
+                <td>{{ part_name|default:"" }}</td>
+                <td class="font-bold">Part Number : {{ part_number|default:"" }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Tool Description</td>
+                <td>{{ tool_description|default:"" }}</td>
+                <td><span class="font-bold">Process / Operation:</span><br>{{ process|default:"" }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Tool Code</td>
+                <td>{{ tino|default:"" }}</td>
+                <td><span class="font-bold">P.M. Frequency:</span><br>{{ pm_frequency|default:"" }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Make/Supplier</td>
+                <td>{{ make_supplier|default:"" }}</td>
+                <td><span class="font-bold">Date of Commission & Tool Life:</span><br>{{ date_of_commission|default:"" }} {% if tool_life %} | {{ tool_life }} yrs{% endif %}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Refer Report No</td>
+                <td>{{ refer_report_no|default:"" }}</td>
+                <td><span class="font-bold">Punch & Die clearance:</span><br>NA</td>
+            </tr>
+        </table>
+
+        <!-- PREVENTIVE MAINTENANCE -->
+        <table>
+            <tr>
+                <td colspan="7" class="section-header">PREVENTIVE MAINTENANCE</td>
+            </tr>
+            <tr class="font-bold text-center" style="background-color: #fafafa;">
+                <td style="width: 5%;">Sl.No</td>
+                <td style="width: 12%;">Date</td>
+                <td style="width: 16%;">Report No</td>
+                <td style="width: 12%;">Status</td>
+                <td style="width: 25%;">Remarks</td>
+                <td style="width: 15%;">Inspected By</td>
+                <td style="width: 15%;">Verified/Approved</td>
+            </tr>
+            {% for pm in pm_events %}
+            <tr class="text-center">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ pm.actualdate|date:"d/m/Y" }}</td>
+                <td>{{ pm.pmreportno|default:"" }}</td>
+                <td>{{ pm.status|default:"" }}</td>
+                <td class="text-left">{{ pm.rmk|default:"" }}</td>
+                <td>{{ pm.inspector|default:"" }}</td>
+                <td>{{ pm.Approver|default:"" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center" style="color: #64748b; padding: 12px;">— No preventive maintenance
+                    records available —</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- BREAKDOWN MAINTENANCE -->
+        <table>
+            <tr>
+                <td colspan="7" class="section-header">BREAKDOWN MAINTENANCE</td>
+            </tr>
+            <tr class="font-bold text-center" style="background-color: #fafafa;">
+                <td style="width: 4%; vertical-align: middle;">Sl.No</td>
+                <td style="width: 10%; vertical-align: middle;">Date</td>
+                <td style="width: 26%; vertical-align: middle;">Reason for Breakdown/Modification</td>
+                <td colspan="2" style="width: 30%; padding: 0;">
+                    <div style="border-bottom: 1px solid #000; padding: 4px; box-sizing: border-box;">Corrective Action</div>
+                    <div style="display: table; width: 100%; table-layout: fixed; box-sizing: border-box;">
+                        <div style="display: table-cell; width: 50%; border-right: 1px solid #000; padding: 4px;">Verified/Approved</div>
+                        <div style="display: table-cell; width: 50%; padding: 4px;">Report No</div>
+                    </div>
+                </td>
+                <td style="width: 15%; padding: 0;">
+                    <div style="border-bottom: 1px solid #000; padding: 4px; box-sizing: border-box;">Tool down time in HRS.</div>
+                    <div style="padding: 4px; box-sizing: border-box;">Status</div>
+                </td>
+                <td style="width: 15%; vertical-align: middle;">Verified/Approved</td>
+            </tr>
+            {% for bd in bd_events %}
+            <tr class="text-center">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ bd.bd_date|date:"d/m/Y" }}</td>
+                <td class="text-left">{{ bd.reason|default:"" }}</td>
+                <td></td>
+                <td>{{ bd.reportNo|default:"" }}</td>
+                <td style="padding: 0;">
+                    <div style="padding: 4px;">{{ bd.downtime|default:"0.00" }}</div>
+                    <div style="border-top: 1px solid #000; padding: 4px;">{{ bd.Status|default:"" }}</div>
+                </td>
+                <td>{{ bd.Approved|default:"" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center" style="color: #64748b; padding: 12px;">— No breakdown maintenance
+                    records available —</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- TOOL MODIFICATIONS -->
+        <table style="margin-bottom: 0;">
+            <tr>
+                <td colspan="6" class="section-header">TOOL MODIFICATIONS</td>
+            </tr>
+            <tr class="font-bold text-center" style="background-color: #fafafa;">
+                <td style="width: 5%;">Sl.No</td>
+                <td style="width: 12%;">Date</td>
+                <td style="width: 13%;">Revision</td>
+                <td style="width: 40%;">Description</td>
+                <td style="width: 15%;">Report No</td>
+                <td style="width: 15%;">Verified/Approved</td>
+            </tr>
+            {% for mod in mod_events %}
+            <tr class="text-center">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ mod.ExtendedOn|date:"d/m/Y" }}</td>
+                <td></td>
+                <td class="text-left">{{ mod.Remarks|default:"" }} (Extended {{ mod.ToolLifeExtendedYr }} Yrs)</td>
+                <td>{{ mod.InspectionReportNo|default:"" }}</td>
+                <td>{{ mod.ApprovedBy|default:"" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center" style="color: #64748b; padding: 12px;">— No tool modifications
+                    available —</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    </div>
+
+    <script>
+        // Trigger automated hidden PDF generation
+        window.onload = function() {
+            setTimeout(() => {
+                const element = document.getElementById('printable-area');
+                
+                // Switch classes briefly into perfect print isolation layout avoiding weird scale compression
+                element.classList.add('pdf-active-container');
+
+                // Clean pointer syntax securely bypassing path-errors in OS saves
+                const ptrNameRaw = '{{ ptr.ptrno }}';
+                const safeName = ptrNameRaw.replace(/[\/\\]/g, '-');
+                
+                const opt = {
+                    margin:       10, // 10mm margin + 190mm container = 210mm A4 total
+                    filename:     safeName + '_Tool_History.pdf',
+                    image:        { type: 'jpeg', quality: 1.0 },
+                    html2canvas:  { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Signal success closing the proxy tab automatically gracefully after download drops
+                    document.getElementById('loader-overlay').innerHTML = `
+                        <div style="font-size: 24px; color: #10b981; font-weight: bold; margin-bottom: 10px;">✓ Complete</div>
+                        <div>Your PDF has downloaded successfully.</div>
+                        <div style="font-size: 13px; color: #64748b; margin-top: 15px;">This window will close automatically...</div>
+                    `;
+                    setTimeout(() => window.close(), 1500);
+                });
+            }, 600); // Wait 600ms permitting the browser's native DOM to latch onto the image src cache correctly!
+        };
+    </script>
+</body>
+</html>

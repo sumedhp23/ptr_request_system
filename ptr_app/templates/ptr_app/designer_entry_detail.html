@@ -1,0 +1,565 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}PTR Entry Detail — PTR System{% endblock %}
+{% block breadcrumb %}PTR Entry / {{ ptr.ptrno|default:"Request" }}{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+    {% if ptr.status >= 6 %}
+    <a href="{% url 'receiving_feedback' %}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;">
+        <span class="material-icons-outlined" style="font-size: 18px;">arrow_back</span>
+        Back to Feedback Section
+    </a>
+    {% else %}
+    <a href="{% url 'designer_entry_list' %}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;">
+        <span class="material-icons-outlined" style="font-size: 18px;">arrow_back</span>
+        Back to Requests
+    </a>
+    {% endif %}
+    <h2 class="page-title" style="margin: 0;">Request Details: {{ ptr.ptrno|default:"PTR" }}</h2>
+</div>
+
+<!-- 3-Column Action Layout -->
+<div class="designer-grid">
+
+    <!-- ═══ PANEL 1: Designer ═══ -->
+    <div class="designer-column">
+        <div class="panel-header">1] Designer</div>
+        <div class="panel-body">
+            <form method="post" id="designerForm">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="designer">
+
+                <div class="form-group-compact">
+                    <label>PTR Number</label>
+                    <input type="text" class="form-control" value="{{ ptr.ptrno|default:'—' }}" readonly style="background-color: #f1f5f9; font-weight: 600;">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Designer : <span style="color: var(--clr-text-main); font-weight: 500;">{{ admin.desginer|default:"—" }}</span> &nbsp;|&nbsp; UNIT : <span style="color: var(--clr-text-main); font-weight: 500;">{{ ptr.unit }}</span></label>
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Actual Start Date :</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="date" name="ASD" class="form-control" style="width: 150px;" value="{% if de.ASD %}{{ de.ASD|date:'Y-m-d' }}{% endif %}">
+                        <span class="material-icons-outlined" style="color: #64748b; font-size: 18px;">calendar_month</span>
+                    </div>
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Actual Completion Date :</label>
+                    <input type="date" name="ACD" class="form-control" style="width: 150px;" value="{% if de.ACD %}{{ de.ACD|date:'Y-m-d' }}{% endif %}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Actual Hours :</label>
+                    <input type="number" name="actualHr" class="form-control" value="{{ de.actualHr|default:'' }}" min="0">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>DESCRIPTION OF TOOLING</label>
+                    <input type="text" name="DescTooling" class="form-control" value="{{ de.DescTooling|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>TINO</label>
+                    <input type="text" name="TINo" class="form-control" value="{{ de.TINo|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Estimated Cost</label>
+                    <input type="text" name="ECost" class="form-control" value="{{ de.ECost|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>PATH IN CM</label>
+                    <input type="text" name="Path" class="form-control" value="{{ de.Path|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Tool/Fixture Material Type</label>
+                    <select name="ToolMaterial" class="form-control form-select">
+                        <option value="">-- Select Material --</option>
+                        <option value="Steel" {% if de.ToolMaterial == "Steel" %}selected{% endif %}>Steel</option>
+                        <option value="Aluminium" {% if de.ToolMaterial == "Aluminium" %}selected{% endif %}>Aluminium</option>
+                        <option value="Steel+Aluminium" {% if de.ToolMaterial == "Steel+Aluminium" %}selected{% endif %}>Steel+Aluminium</option>
+                        <option value="Aluminium+Steel" {% if de.ToolMaterial == "Aluminium+Steel" %}selected{% endif %}>Aluminium+Steel</option>
+                    </select>
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Tool Life</label>
+                    <input type="text" name="toollife" class="form-control" value="{{ de.toollife|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>PM Frequency / yr</label>
+                    <input type="number" name="PMFrequency" class="form-control" value="{{ de.PMFrequency|default:'' }}" min="0">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Designer Remarks (Nesting Qty, ZPS(2S,4S), Common for, Vice & Jaws Details, Others)</label>
+                    <textarea name="desremarks" class="form-control" rows="2">{{ de.desremarks|default:'' }}</textarea>
+                </div>
+
+                <div class="form-group-compact" style="margin-top: 24px;">
+                    <label class="checkbox-inline" style="font-weight: 700; color: var(--clr-primary); cursor: pointer;">
+                        <input type="checkbox" id="mainCriticalSparesCheck" name="iscmc" {% if de.iscmc %}checked{% endif %}> Critical Spares Required
+                    </label>
+                </div>
+
+                <!-- Hidden inputs to carry critical spares data with the designer form -->
+                <div id="sparesHiddenFields">
+                    {% for spare in critical_spares %}
+                    <input type="hidden" name="spare_drgno" value="{{ spare.drgNO }}">
+                    <input type="hidden" name="spare_cmcode" value="{{ spare.cmcode }}">
+                    <input type="hidden" name="spare_desc" value="{{ spare.desc }}">
+                    <input type="hidden" name="spare_qty" value="{{ spare.qty|default:'' }}">
+                    <input type="hidden" name="spare_uom" value="{{ spare.UOM }}">
+                    {% endfor %}
+                </div>
+
+                <div class="checkbox-row" style="margin-top: 16px;">
+                    <span style="width: 100%; font-size: 11px; font-weight: 600; color: var(--clr-text-muted); text-transform: uppercase;">Execution Requirements</span>
+                    <label class="checkbox-inline"><input type="checkbox" name="isinhous" {% if de.isinhous %}checked{% endif %}> Aequs inhouse</label>
+                    <label class="checkbox-inline"><input type="checkbox" name="isVoiceSetup" {% if de.isVoiceSetup %}checked{% endif %}> ViceSetup</label>
+                    <label class="checkbox-inline"><input type="checkbox" name="chk_jaw" {% if de.chk_jaw %}checked{% endif %}> Turning Jaw Setup</label>
+                    <label class="checkbox-inline"><input type="checkbox" name="eng_support"> Engineering Support</label>
+                </div>
+
+                {% if ptr.status == 3 %}
+                <button type="submit" class="btn btn-primary" style="margin-top: 24px; width: 100%;">Submit Designer Entry</button>
+                {% elif request.user.is_superuser %}
+                <div style="margin-top: 24px; padding: 8px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 12px; color: #166534; margin-bottom: 12px;">
+                    <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">check_circle</span> Designer entry already submitted
+                </div>
+                <button type="submit" class="btn btn-outline" style="width: 100%; border-color: #f59e0b; color: #d97706;">
+                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">edit_note</span> Update Designer Entry (Admin Bypass)
+                </button>
+                {% else %}
+                <div style="margin-top: 24px; padding: 8px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 12px; color: #166534;">
+                    <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">check_circle</span> Designer entry submitted
+                </div>
+                <!-- Make form fields readonly for non-admins if submitted -->
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const form1 = document.getElementById("designerForm");
+                        const inputs = form1.querySelectorAll("input, select, textarea");
+                        inputs.forEach(i => {
+                            if (i.type !== 'hidden' && i.name !== "csrfmiddlewaretoken") {
+                                i.setAttribute('readonly', true);
+                                if (i.tagName === 'SELECT' || i.type === 'checkbox') i.setAttribute('disabled', true);
+                            }
+                        });
+                    });
+                </script>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ═══ PANEL 2: Tooling Executive ═══ -->
+    <div class="designer-column">
+        <div class="panel-header">2] Tooling Executive</div>
+        <div class="panel-body">
+            <form method="post" id="toolingExecForm">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="tooling_exec">
+
+                <div class="form-group-compact" style="margin-top: 12px; margin-bottom: 20px;">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="waitingroi" {% if de.waitingroi %}checked{% endif %}> Waiting for ROI No.
+                    </label>
+                </div>
+
+                <div class="form-group-compact">
+                    <label>ROI / WBS</label>
+                    <input type="text" name="roino" class="form-control" value="{{ de.roino|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Fixed Asset Code :</label>
+                    <input type="text" name="consumablecode" class="form-control" value="{{ de.consumablecode|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>MPR Date</label>
+                    <input type="date" name="mprDate" class="form-control" style="width: 150px;" value="{% if de.mprDate %}{{ de.mprDate|date:'Y-m-d' }}{% endif %}">
+                </div>
+
+                <div class="form-group-compact" style="margin-top: 24px;">
+                    <label>MPR Number</label>
+                    <input type="text" name="MPRNo" class="form-control" value="{{ de.MPRNo|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Supplier</label>
+                    <input type="text" name="suplier" class="form-control" value="{{ de.suplier|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Actual cost as Per PO</label>
+                    <input type="text" name="pocost" class="form-control" value="{{ de.pocost|default:'' }}">
+                </div>
+
+                <div class="form-group-compact">
+                    <label>Expected Delivery Date :</label>
+                    <input type="date" name="eddate" class="form-control" style="width: 150px;" value="{% if de.eddate %}{{ de.eddate|date:'Y-m-d' }}{% endif %}">
+                </div>
+
+                <div style="margin-top: 32px;">
+                    {% if ptr.status == 4 %}
+                    <button type="submit" class="btn btn-outline" style="padding: 4px 12px; font-size: 12px; border-radius: 2px;">Submit</button>
+                    {% elif ptr.status >= 5 and request.user.is_superuser %}
+                    <div style="padding: 8px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 12px; color: #166534; margin-bottom: 12px;">
+                        <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">check_circle</span> Tooling exec entry submitted
+                    </div>
+                    <button type="submit" class="btn btn-outline" style="padding: 4px 12px; font-size: 12px; border-radius: 2px; border-color: #f59e0b; color: #d97706;">Update Entry (Admin)</button>
+                    {% elif ptr.status >= 5 %}
+                    <div style="padding: 8px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 12px; color: #166534;">
+                        <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">check_circle</span> Tooling exec entry submitted
+                    </div>
+                    <!-- Make form fields readonly for non-admins if submitted -->
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const form2 = document.getElementById("toolingExecForm");
+                            const inputs = form2.querySelectorAll("input, select, textarea");
+                            inputs.forEach(i => {
+                                if (i.type !== 'hidden' && i.name !== "csrfmiddlewaretoken") {
+                                    i.setAttribute('readonly', true);
+                                    if (i.tagName === 'SELECT' || i.type === 'checkbox') i.setAttribute('disabled', true);
+                                }
+                            });
+                        });
+                    </script>
+                    {% else %}
+                    <div style="padding: 8px 12px; background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; font-size: 12px; color: #92400e;">
+                        <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">hourglass_top</span> Waiting for designer entry
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ═══ PANEL 3: TOOL ROOM ═══ -->
+    <div class="designer-column">
+        <div class="panel-header">TOOL ROOM</div>
+        <div class="panel-body">
+            <form method="post" id="toolroomForm">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="toolroom">
+
+                <div class="form-group-compact" style="margin-top: 24px;">
+                    <label style="color: #94a3b8; font-weight: 500;">TRAIL FEEDBACK REPORT NUMBER</label>
+                    <input type="text" name="Tfeedback" class="form-control" value="{{ de.Tfeedback|default:'' }}" {% if ptr.status != 6 %}readonly style="cursor: not-allowed;"{% endif %}>
+                </div>
+
+                <div style="margin-top: 16px; margin-bottom: 32px;">
+                    {% if ptr.status == 6 %}
+                    <button type="submit" class="btn btn-outline" style="padding: 4px 12px; font-size: 12px; border-radius: 2px;">Submit Feedback</button>
+                    {% elif ptr.status >= 7 %}
+                    <div style="padding: 8px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 12px; color: #166534;">
+                        <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">check_circle</span> Feedback completed
+                    </div>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const form3 = document.getElementById("toolroomForm");
+                            const inputs = form3.querySelectorAll("input, button.btn-action");
+                            inputs.forEach(i => {
+                                if (i.type !== 'hidden' && i.name !== "csrfmiddlewaretoken") {
+                                    i.setAttribute('disabled', true);
+                                }
+                            });
+                        });
+                    </script>
+                    {% else %}
+                    <div style="padding: 8px 12px; background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; font-size: 12px; color: #92400e;">
+                        <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">hourglass_top</span> Form locked pending Verification / Receiving (Status 6)
+                    </div>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const form3 = document.getElementById("toolroomForm");
+                            const inputs = form3.querySelectorAll("input, button.btn-action");
+                            inputs.forEach(i => {
+                                if (i.type !== 'hidden' && i.name !== "csrfmiddlewaretoken") {
+                                    i.setAttribute('disabled', true);
+                                }
+                            });
+                        });
+                    </script>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-action" id="btnCommonModal" style="background-color: #3b82f6; min-width: 80px; border-radius: 2px;">Common</button>
+                    <button type="button" class="btn btn-action" id="btnShortClose" style="background-color: #ef4444; min-width: 80px; border-radius: 2px;">Short Close</button>
+                </div>
+            </form>
+            
+            <form method="post" id="shortCloseForm" style="display: none;">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="shortclose">
+                <input type="hidden" name="shortclose_reason" id="shortcloseReason">
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════ COMMON POPUP MODAL ═══════════════ -->
+<div class="modal-overlay" id="commonModal">
+    <div class="modal-content" style="max-width: 600px; width: 95%;">
+        <div class="modal-header" style="background-color: #f1f5f9; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;">
+            <h4 class="modal-title" style="margin: 0; font-size: 16px; font-weight: 500; color: #475569;">Make Common with other TINo.</h4>
+            <button type="button" class="modal-close" id="btnCloseCommonModal" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 24px 20px;">
+            <form method="post" id="commonForm">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="common">
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: #64748b; font-size: 13px; font-weight: 500; margin-bottom: 8px; display: block;">Select Common No.</label>
+                    <select name="commonptrid" class="form-control" style="width: 100%; border-radius: 4px;" required>
+                        <option value="">-SELECT-</option>
+                        {% for t in all_tinos %}
+                        <option value="{{ t.ptr_id }}">{{ t.TINo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="color: #6b859e; font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Remarks for Common :</label>
+                    <textarea name="commonremarks" class="form-control" style="width: 100%; height: 100px; padding: 6px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-danger" style="background-color: #d9534f; border-color: #d43f3a; color: white; padding: 6px 12px; font-size: 14px; font-weight: 400; border-radius: 4px;">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ CRITICAL SPARES POPUP MODAL ═══════════════ -->
+<div class="modal-overlay" id="sparesModal">
+    <div class="modal-content" style="max-width: 860px; width: 95%;">
+        <div class="modal-header" style="background-color: #f1f5f9; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;">
+            <h3 class="modal-title" style="margin: 0; font-size: 14px; font-weight: 500; color: #475569;">
+                Updation of List of critical spares
+            </h3>
+            <button class="modal-close" id="btnCloseSparesModal" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 24px 20px;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0 8px;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; font-size: 12px; font-weight: 500; color: #64748b; padding-bottom: 4px;">Drawing Number</th>
+                        <th style="text-align: left; font-size: 12px; font-weight: 500; color: #64748b; padding-bottom: 4px;">Consumable Code</th>
+                        <th style="text-align: left; font-size: 12px; font-weight: 500; color: #64748b; padding-bottom: 4px;">Description</th>
+                        <th style="text-align: left; font-size: 12px; font-weight: 500; color: #64748b; padding-bottom: 4px;">Quantity(Numeric)</th>
+                        <th style="text-align: left; font-size: 12px; font-weight: 500; color: #64748b; padding-bottom: 4px;">UOM</th>
+                    </tr>
+                </thead>
+                <tbody id="modalSparesRows">
+                </tbody>
+            </table>
+            <div style="margin-top: 8px;">
+                <button type="button" id="modalAddRow" class="btn btn-outline" style="font-size: 11px; padding: 4px 12px;">+ Add Row</button>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 12px 20px; border-top: 1px solid var(--clr-border); display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn btn-outline" id="btnCancelSparesModal" style="padding: 6px 16px;">Cancel</button>
+            <button class="btn btn-primary" id="btnSaveSparesModal" style="padding: 6px 24px;">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const criticalCheck = document.getElementById("mainCriticalSparesCheck");
+    const modal = document.getElementById("sparesModal");
+    const btnClose = document.getElementById("btnCloseSparesModal");
+    const btnCancel = document.getElementById("btnCancelSparesModal");
+    const btnSave = document.getElementById("btnSaveSparesModal");
+    const modalRows = document.getElementById("modalSparesRows");
+    const modalAddRow = document.getElementById("modalAddRow");
+    const hiddenContainer = document.getElementById("sparesHiddenFields");
+
+    function createModalRow(drgno, cmcode, desc, qty, uom) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+            '<td style="padding: 2px 4px 2px 0;"><input type="text" class="form-control sp-drgno" value="' + (drgno || '') + '" style="font-size: 12px; padding: 6px 8px;"></td>' +
+            '<td style="padding: 2px 4px;"><input type="text" class="form-control sp-cmcode" value="' + (cmcode || '') + '" style="font-size: 12px; padding: 6px 8px;"></td>' +
+            '<td style="padding: 2px 4px;"><input type="text" class="form-control sp-desc" value="' + (desc || '') + '" style="font-size: 12px; padding: 6px 8px;"></td>' +
+            '<td style="padding: 2px 4px;"><input type="text" class="form-control sp-qty" value="' + (qty || '') + '" style="font-size: 12px; padding: 6px 8px;"></td>' +
+            '<td style="padding: 2px 0 2px 4px;"><input type="text" class="form-control sp-uom" value="' + (uom || '') + '" style="font-size: 12px; padding: 6px 8px;"></td>';
+        return tr;
+    }
+
+    function openModal() {
+        modalRows.innerHTML = "";
+
+        // Load existing data from hidden fields
+        var existingDrg = hiddenContainer.querySelectorAll('input[name="spare_drgno"]');
+        var existingCm = hiddenContainer.querySelectorAll('input[name="spare_cmcode"]');
+        var existingDesc = hiddenContainer.querySelectorAll('input[name="spare_desc"]');
+        var existingQty = hiddenContainer.querySelectorAll('input[name="spare_qty"]');
+        var existingUom = hiddenContainer.querySelectorAll('input[name="spare_uom"]');
+
+        if (existingDrg.length > 0) {
+            for (var i = 0; i < existingDrg.length; i++) {
+                modalRows.appendChild(createModalRow(
+                    existingDrg[i].value,
+                    existingCm[i] ? existingCm[i].value : "",
+                    existingDesc[i] ? existingDesc[i].value : "",
+                    existingQty[i] ? existingQty[i].value : "",
+                    existingUom[i] ? existingUom[i].value : ""
+                ));
+            }
+        }
+
+        // Always ensure at least 1 row
+        while (modalRows.children.length < 1) {
+            modalRows.appendChild(createModalRow("", "", "", "", ""));
+        }
+
+        modal.classList.add("active");
+    }
+
+    function closeModal() {
+        modal.classList.remove("active");
+    }
+
+    // Open modal when checkbox is checked
+    criticalCheck.addEventListener("change", function() {
+        if (this.checked) {
+            openModal();
+        }
+    });
+
+    btnClose.addEventListener("click", function() {
+        closeModal();
+        if (hiddenContainer.querySelectorAll('input[name="spare_drgno"]').length === 0) {
+            criticalCheck.checked = false;
+        }
+    });
+
+    btnCancel.addEventListener("click", function() {
+        closeModal();
+        if (hiddenContainer.querySelectorAll('input[name="spare_drgno"]').length === 0) {
+            criticalCheck.checked = false;
+        }
+    });
+
+    modal.addEventListener("click", function(e) {
+        if (e.target === modal) {
+            closeModal();
+            if (hiddenContainer.querySelectorAll('input[name="spare_drgno"]').length === 0) {
+                criticalCheck.checked = false;
+            }
+        }
+    });
+
+    // Add row in modal
+    modalAddRow.addEventListener("click", function() {
+        modalRows.appendChild(createModalRow("", "", "", "", ""));
+    });
+
+    // Save: copy modal data into hidden fields for the designer form
+    btnSave.addEventListener("click", function() {
+        hiddenContainer.innerHTML = "";
+
+        var rows = modalRows.querySelectorAll("tr");
+        var hasData = false;
+
+        rows.forEach(function(row) {
+            var drgno = row.querySelector(".sp-drgno").value.trim();
+            var cmcode = row.querySelector(".sp-cmcode").value.trim();
+            var desc = row.querySelector(".sp-desc").value.trim();
+            var qty = row.querySelector(".sp-qty").value.trim();
+
+            if (drgno || cmcode || desc || qty) {
+                hasData = true;
+                var h1 = document.createElement("input"); h1.type = "hidden"; h1.name = "spare_drgno"; h1.value = drgno;
+                var h2 = document.createElement("input"); h2.type = "hidden"; h2.name = "spare_cmcode"; h2.value = cmcode;
+                var h3 = document.createElement("input"); h3.type = "hidden"; h3.name = "spare_desc"; h3.value = desc;
+                var h4 = document.createElement("input"); h4.type = "hidden"; h4.name = "spare_qty"; h4.value = qty;
+                var h5 = document.createElement("input"); h5.type = "hidden"; h5.name = "spare_uom"; h5.value = row.querySelector(".sp-uom").value.trim();
+                hiddenContainer.appendChild(h1);
+                hiddenContainer.appendChild(h2);
+                hiddenContainer.appendChild(h3);
+                hiddenContainer.appendChild(h4);
+                hiddenContainer.appendChild(h5);
+            }
+        });
+
+        criticalCheck.checked = hasData;
+        closeModal();
+    });
+
+    // ─── Short Close UI Logic ───
+    const btnShortClose = document.getElementById("btnShortClose");
+    if (btnShortClose) {
+        btnShortClose.addEventListener("click", function(e) {
+            e.preventDefault();
+            const reason = prompt("Please enter the reason for Short Close:");
+            if (reason !== null) {
+                document.getElementById("shortcloseReason").value = reason;
+                document.getElementById("shortCloseForm").submit();
+            }
+        });
+    }
+
+    // ─── Common Modal UI Logic ───
+    const commonModal = document.getElementById("commonModal");
+    const btnCommonModal = document.getElementById("btnCommonModal");
+    const btnCloseCommonModal = document.getElementById("btnCloseCommonModal");
+
+    if (btnCommonModal) {
+        btnCommonModal.addEventListener("click", function(e) {
+            e.preventDefault();
+            console.log("Common button clicked, showing modal.");
+            if (commonModal) {
+                commonModal.classList.add("active");
+            }
+        });
+    }
+
+    if (btnCloseCommonModal) {
+        btnCloseCommonModal.addEventListener("click", function() {
+            commonModal.classList.remove("active");
+        });
+    }
+
+    // Close common model when clicking outside its content
+    if (commonModal) {
+        window.addEventListener("click", function(event) {
+            if (event.target === commonModal) {
+                commonModal.classList.remove("active");
+            }
+        });
+    }
+
+    // ─── Auto-fill PM Frequency based on Material ───
+    const toolMaterialSelect = document.querySelector('select[name="ToolMaterial"]');
+    const pmFreqInput = document.querySelector('input[name="PMFrequency"]');
+    if (toolMaterialSelect && pmFreqInput) {
+        toolMaterialSelect.addEventListener('change', function(e) {
+            const mat = e.target.value;
+            if (mat === "Steel" || mat === "Steel+Aluminium") {
+                pmFreqInput.value = "2";
+            } else if (mat === "Aluminium" || mat === "Aluminium+Steel") {
+                pmFreqInput.value = "1";
+            } else {
+                pmFreqInput.value = "";
+            }
+        });
+    }
+
+});
+</script>
+{% endblock %}

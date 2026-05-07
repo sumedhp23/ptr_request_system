@@ -1,0 +1,131 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Update Material Type — Tooling Admin{% endblock %}
+{% block breadcrumb %}Tooling Admin / Update Material Type{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">UPDATE MATERIAL TYPE</h2>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card form-card"
+        style="padding: 24px; box-shadow: none; border: 1px solid var(--clr-border); max-width: 800px;">
+
+        <!-- ═══ Unit Selector ═══ -->
+        <div class="form-section" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 2px solid var(--clr-border);">
+            <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+                    <label for="unit_filter" style="font-weight: 600;">Select Unit</label>
+                    <select name="unit" id="unit_filter" class="form-control form-select"
+                        onchange="window.location.href='?unit=' + this.value">
+                        <option value="">-- All Units --</option>
+                        <option value="ASMIPL" {% if selected_unit == 'ASMIPL' %}selected{% endif %}>ASMIPL</option>
+                        <option value="ASYM" {% if selected_unit == 'ASYM' %}selected{% endif %}>ASYM</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px;">
+            <div class="form-group-compact" style="max-width: 400px;">
+                <label
+                    style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">TINo.</label>
+                <input type="text" id="tiNoInput" name="tino" class="form-control" list="tiNoOptions"
+                    placeholder="Search or select TINo..." autocomplete="off" required>
+                <datalist id="tiNoOptions">
+                    {% for de in de_records %}
+                    <option value="{{ de.TINo }}">
+                        {% endfor %}
+                </datalist>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 24px;">
+            <div class="form-group-compact">
+                <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Old
+                    Material</label>
+                <input type="text" id="oldMaterialInput" class="form-control" placeholder="Auto-filled" readonly
+                    style="background-color: #f1f5f9; cursor: not-allowed;">
+            </div>
+            <div class="form-group-compact">
+                <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">New
+                    Material</label>
+                <select id="newMaterialSelect" name="new_material" class="form-control form-select" required>
+                    <option value="">-- Select New Material --</option>
+                    <option value="Steel">Steel</option>
+                    <option value="Aluminium">Aluminium</option>
+                    <option value="Steel+Aluminium">Steel+Aluminium</option>
+                    <option value="Aluminium+Steel">Aluminium+Steel</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 32px;">
+            <div class="form-group-compact" style="max-width: 400px;">
+                <label
+                    style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Frequency</label>
+                <input type="text" id="frequencyInput" name="frequency" class="form-control"
+                    placeholder="Auto-filled based on new material" readonly
+                    style="background-color: #f1f5f9; cursor: not-allowed;" required>
+            </div>
+        </div>
+
+        <div style="text-align: right; border-top: 1px solid var(--clr-border); padding-top: 16px;">
+            <button type="submit" id="saveBtn" class="btn btn-primary"
+                style="background-color: #3b82f6; border-color: #3b82f6; padding: 8px 32px; font-weight: 500;">Save
+                Changes</button>
+        </div>
+    </div>
+</form>
+
+<script id="tino-data" type="application/json">
+    {{ tino_data|safe }}
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Backend fetched context
+        const dbData = JSON.parse(document.getElementById('tino-data').textContent);
+
+        const tiInput = document.getElementById('tiNoInput');
+        const oldMatInput = document.getElementById('oldMaterialInput');
+        const newMatSelect = document.getElementById('newMaterialSelect');
+        const freqInput = document.getElementById('frequencyInput');
+
+        // Auto-fill old material when TINo selected
+        tiInput.addEventListener('input', function (e) {
+            const val = e.target.value.trim();
+            if (dbData[val]) {
+                oldMatInput.value = dbData[val].oldMaterial;
+            } else {
+                oldMatInput.value = "";
+            }
+        });
+
+        // Auto-update frequency when New Material changes
+        newMatSelect.addEventListener('change', function (e) {
+            const mat = e.target.value;
+            if (mat === "Steel" || mat === "Steel+Aluminium") {
+                freqInput.value = "2";
+            } else if (mat === "Aluminium" || mat === "Aluminium+Steel") {
+                freqInput.value = "1";
+            } else {
+                freqInput.value = "";
+            }
+        });
+
+        // Form Validation to prevent matching materials
+        const form = document.querySelector('form[method="post"]');
+        form.addEventListener('submit', function (e) {
+            const oldVal = oldMatInput.value.trim();
+            const newVal = newMatSelect.value.trim();
+
+            if (oldVal && newVal && oldVal === newVal) {
+                e.preventDefault(); // Stop submission
+                alert("Error: The New Material must be different from the Old Material to update.");
+            }
+        });
+    });
+</script>
+{% endblock %}

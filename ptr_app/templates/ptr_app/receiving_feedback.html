@@ -1,0 +1,226 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Receiving Feedback — PTR System{% endblock %}
+{% block breadcrumb %}Receiving Entry / Feedback{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title">Receiving Feedback</h2>
+</div>
+
+<!-- ══════ Pending Feedback Section (Status 6) ══════ -->
+<div class="card table-card" style="margin-bottom: 32px;">
+    
+    <!-- Pending Toolbar -->
+    <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 14px; font-weight: 600; color: #0284c7;">Pending Feedback</span>
+            <div style="height: 20px; width: 1px; background-color: #cbd5e1;"></div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap;">Select Unit:</label>
+                <select class="form-control form-select" id="unitFilter" style="width: 140px; padding: 4px 8px; font-size: 12px; height: 32px;">
+                    <option value="" {% if not selected_unit %}selected{% endif %}>All Units</option>
+                    <option value="ASMIPL" {% if selected_unit == "ASMIPL" %}selected{% endif %}>ASMIPL</option>
+                    <option value="ASYM" {% if selected_unit == "ASYM" %}selected{% endif %}>ASYM</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="position: relative;">
+                <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+                <input type="text" id="pendingSearchInput" class="form-control" style="width: 220px; padding: 4px 8px 4px 28px; font-size: 12px; border-radius: 4px; height: 32px;" placeholder="Search pending...">
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="approval-table focus-table" style="min-width: 1400px; font-size: 11px;">
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>Request</th>
+                    <th style="white-space: nowrap;">PTR NO.</th>
+                    <th>Unit</th>
+                    <th>Part No.</th>
+                    <th>Part Name</th>
+                    <th>Project</th>
+                    <th>Drawing No</th>
+                    <th>Process</th>
+                    <th>Date of Tooling Reqd</th>
+                    <th>Batch QTY</th>
+                    <th>Plan Completion Date</th>
+                    <th>TINo</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in pending_rows %}
+                <tr class="pending-row searchable-row">
+                    <td>{{ row.sno }}</td>
+                    <td>PTR</td>
+                    <td style="white-space: nowrap;"><span style="font-weight: 600; color: #1e40af;">{{ row.ptr.ptrno|default:"—" }}</span></td>
+                    <td>{{ row.ptr.unit }}</td>
+                    <td style="font-size: 11px;">{{ row.ptr.partcode }}</td>
+                    <td>{{ row.ptr.partname }}</td>
+                    <td>{{ row.project_name }}</td>
+                    <td>{{ row.ptr.drawing|default:"—" }}</td>
+                    <td>{{ row.ptr.process }}</td>
+                    <td>{{ row.ptr.dotr|date:"d/m/Y" }}</td>
+                    <td>{{ row.ptr.bqty }}</td>
+                    <td>{% if row.admin %}{{ row.admin.pldcompdate|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                    <td>{% if row.de %}{{ row.de.TINo|default:"—" }}{% else %}—{% endif %}</td>
+                    <td>
+                        <a href="{% url 'designer_entry_detail' row.ptr.pk %}" class="btn btn-action" style="background-color: #f0f9ff; border: 1px solid #bae6fd; color: #0284c7; padding: 4px 12px; text-decoration: none;">Give Feedback</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="14" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                        <span class="material-icons-outlined" style="font-size: 36px; display: block; margin-bottom: 8px;">inbox</span>
+                        No PTRs pending feedback{% if selected_unit %} for {{ selected_unit }}{% endif %}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════ Completed Feedback Section (Status 7) ══════ -->
+<div class="card table-card" style="margin-bottom: 32px;">
+    <!-- Completed Toolbar -->
+    <div style="padding: 12px 16px; background-color: #f0fdf4; border-bottom: 1px solid #bbf7d0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 14px; font-weight: 600; color: #166534;">Completed Tool Room Feedback</span>
+            <div style="height: 20px; width: 1px; background-color: #bbf7d0;"></div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 600; color: #166534; white-space: nowrap;">Select Unit:</label>
+                <select class="form-control form-select" id="compUnitFilter" style="width: 140px; padding: 4px 8px; font-size: 12px; height: 32px; border-color: #bbf7d0; background-color: #fff;">
+                    <option value="" {% if not comp_unit %}selected{% endif %}>All Units</option>
+                    <option value="ASMIPL" {% if comp_unit == "ASMIPL" %}selected{% endif %}>ASMIPL</option>
+                    <option value="ASYM" {% if comp_unit == "ASYM" %}selected{% endif %}>ASYM</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="position: relative;">
+                <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #4ade80;">search</span>
+                <input type="text" id="completedSearchInput" class="form-control" style="width: 220px; padding: 4px 8px 4px 28px; font-size: 12px; border-radius: 4px; height: 32px; border-color: #bbf7d0;" placeholder="Search completed...">
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="approval-table focus-table" style="min-width: 1400px; font-size: 11px;">
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>Request</th>
+                    <th style="white-space: nowrap;">PTR NO.</th>
+                    <th>Unit</th>
+                    <th>Part No.</th>
+                    <th>Part Name</th>
+                    <th>Project</th>
+                    <th>Drawing No</th>
+                    <th>Process</th>
+                    <th>Date of Tooling Reqd</th>
+                    <th>Batch QTY</th>
+                    <th>Plan Completion Date</th>
+                    <th>TINo</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in completed_rows %}
+                <tr class="completed-row searchable-row" style="background-color: #f8fafc;">
+                    <td>{{ row.sno }}</td>
+                    <td>PTR</td>
+                    <td style="white-space: nowrap;"><span style="font-weight: 600; color: #1e40af;">{{ row.ptr.ptrno|default:"—" }}</span></td>
+                    <td>{{ row.ptr.unit }}</td>
+                    <td style="font-size: 11px;">{{ row.ptr.partcode }}</td>
+                    <td>{{ row.ptr.partname }}</td>
+                    <td>{{ row.project_name }}</td>
+                    <td>{{ row.ptr.drawing|default:"—" }}</td>
+                    <td>{{ row.ptr.process }}</td>
+                    <td>{{ row.ptr.dotr|date:"d/m/Y" }}</td>
+                    <td>{{ row.ptr.bqty }}</td>
+                    <td>{% if row.admin %}{{ row.admin.pldcompdate|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                    <td>{% if row.de %}{{ row.de.TINo|default:"—" }}{% else %}—{% endif %}</td>
+                    <td style="display: flex; flex-direction: column; gap: 6px;">
+                        <span style="display: inline-flex; align-items: center; gap: 4px; color: #16a34a; font-size: 11px; font-weight: 500;">
+                            <span class="material-icons-outlined" style="font-size: 14px;">check_circle</span> Process Completed
+                        </span>
+                        <a href="{% url 'designer_entry_detail' row.ptr.pk %}" class="btn btn-action" style="background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 3px 8px; text-decoration: none; display: inline-flex; align-items: center; width: fit-content; border-radius: 4px;">
+                            <span class="material-icons-outlined" style="font-size: 13px; margin-right: 4px;">visibility</span>View
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="14" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                        <span class="material-icons-outlined" style="font-size: 36px; display: block; margin-bottom: 8px; color: #cbd5e1;">done_all</span>
+                        No completed feedbacks yet{% if selected_unit %} for {{ selected_unit }}{% endif %}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updateUrlParams(key, value) {
+        const url = new URL(window.location.href);
+        if (value) {
+            url.searchParams.set(key, value);
+        } else {
+            url.searchParams.delete(key);
+        }
+        window.location.href = url.toString();
+    }
+
+    // ── Pending Unit Filter
+    document.getElementById('unitFilter').addEventListener('change', function() {
+        updateUrlParams('unit', this.value);
+    });
+
+    // ── Completed Unit Filter
+    document.getElementById('compUnitFilter').addEventListener('change', function() {
+        updateUrlParams('comp_unit', this.value);
+    });
+
+    // ── Live Search for Pending
+    const pendingSearch = document.getElementById('pendingSearchInput');
+    const pendingRows = document.querySelectorAll('.pending-row');
+    if (pendingSearch) {
+        pendingSearch.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            pendingRows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+    }
+
+    // ── Live Search for Completed
+    const completedSearch = document.getElementById('completedSearchInput');
+    const completedRows = document.querySelectorAll('.completed-row');
+    if (completedSearch) {
+        completedSearch.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            completedRows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+
+<style>
+    .btn-action { display: inline-block; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; font-weight: 500; font-size: 11px; padding: 4px 10px; }
+    .btn-action:hover { opacity: 0.9; }
+    .approval-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; }
+    .approval-table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    .approval-table tbody tr:hover { background-color: #f8fafc; }
+</style>
+{% endblock %}

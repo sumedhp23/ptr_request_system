@@ -1,0 +1,182 @@
+{% extends "ptr_app/base.html" %}
+
+{% block title %}Employee Mapping — System Admin{% endblock %}
+{% block breadcrumb %}System Admin / Employee Mapping{% endblock %}
+
+{% block content %}
+<div class="page-header approval-header" style="margin-bottom: 24px;">
+    <h2 class="page-title" style="color: #64748b; font-weight: 500;">EMPLOYEE MAPPING</h2>
+</div>
+
+<div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border); max-width: 800px;">
+    <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+        <span style="font-size: 13px; font-weight: 600; color: #64748b;">Configure Employee Roles</span>
+    </div>
+    <div style="padding: 24px;">
+        <form method="post" id="empMappingForm">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 24px;">
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Employee</label>
+                    <select class="form-control form-select" id="empSelect" name="emp_number" required>
+                        <option value="">-- Select --</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp }}">{{ emp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Department</label>
+                    <select class="form-control form-select" id="deptSelect" name="department">
+                        <option value="">-- Select --</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept }}">{{ dept }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <input type="hidden" name="emp_mail" id="empMailHidden" value="">
+
+            <div class="table-responsive" style="margin-bottom: 24px;">
+                <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid var(--clr-border); padding: 12px;">Role</th>
+                            <th style="border: 1px solid var(--clr-border); padding: 12px; text-align: center;">ASMIPL</th>
+                            <th style="border: 1px solid var(--clr-border); padding: 12px; text-align: center;">ASYM</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in roles %}
+                        <tr>
+                            <td style="border: 1px solid var(--clr-border); padding: 12px; font-weight: 500; color: #475569;">{{ role }}</td>
+                            <td style="border: 1px solid var(--clr-border); padding: 12px; text-align: center;">
+                                <input type="checkbox" name="role_{{ role }}_ASMIPL" id="role_{{ role }}_ASMIPL" style="cursor: pointer; transform: scale(1.1);">
+                            </td>
+                            <td style="border: 1px solid var(--clr-border); padding: 12px; text-align: center;">
+                                <input type="checkbox" name="role_{{ role }}_ASYM" id="role_{{ role }}_ASYM" style="cursor: pointer; transform: scale(1.1);">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 24px; text-align: right; border-top: 1px solid var(--clr-border); padding-top: 16px;">
+                <button type="submit" class="btn btn-primary" style="background-color: #3b82f6; border-color: #3b82f6; padding: 8px 32px; font-weight: 500;">Submit Mapping</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══ Existing Mappings Table ═══ -->
+{% if mappings %}
+<div class="card table-card" style="margin-top: 24px; border: 1px solid var(--clr-border); box-shadow: none;">
+    <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 13px; font-weight: 600; color: #64748b;">Existing Employee Mappings</span>
+        <div style="position: relative;">
+            <span class="material-icons-outlined" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #94a3b8;">search</span>
+            <input type="text" id="liveSearchInput" class="form-control" style="width: 220px; padding: 6px 8px 6px 28px; font-size: 12px; border-radius: 4px;" placeholder="Search mappings...">
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="approval-table" id="mappingsTable">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Role</th>
+                    <th>Unit(s)</th>
+                    <th>Status</th>
+                    <th>Added By</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in mappings %}
+                <tr>
+                    <td style="font-weight: 500;">{{ m.EmpNumber }}</td>
+                    <td>{{ m.department }}</td>
+                    <td>
+                        <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background-color: #dbeafe; color: #1e40af;">{{ m.Role }}</span>
+                    </td>
+                    <td>{{ m.Unit }}</td>
+                    <td>
+                        <span style="color: {% if m.Status == 'Active' %}#16a34a{% else %}#dc2626{% endif %}; font-weight: 500; font-size: 12px;">{{ m.Status }}</span>
+                    </td>
+                    <td style="font-size: 12px; color: #64748b;">{{ m.AddedBy }}</td>
+                    <td style="font-size: 12px; color: #64748b;">{{ m.DateTime|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <form method="post" action="{% url 'sa_delete_employee_mapping' m.EmpNumber %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action reject" style="font-size: 11px; padding: 3px 10px;" onclick="return confirm('Delete all mappings for {{ m.EmpNumber }}?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const empSelect = document.getElementById('empSelect');
+    const deptSelect = document.getElementById('deptSelect');
+
+    // When employee is selected, load their existing role-unit mappings
+    empSelect.addEventListener('change', function() {
+        const emp = this.value;
+
+        // Clear all checkboxes first
+        document.querySelectorAll('#empMappingForm input[type="checkbox"]').forEach(cb => cb.checked = false);
+        deptSelect.value = '';
+        document.getElementById('empMailHidden').value = '';
+
+        if (!emp) return;
+
+        fetch('/system-admin/employee-mapping/load/?emp=' + encodeURIComponent(emp))
+            .then(r => r.json())
+            .then(data => {
+                // Set department
+                if (data.department) {
+                    deptSelect.value = data.department;
+                }
+                // Set email
+                if (data.email) {
+                    document.getElementById('empMailHidden').value = data.email;
+                }
+                // Set role checkboxes
+                const mappings = data.mappings;
+                for (const [role, units] of Object.entries(mappings)) {
+                    if (units.includes('ASMIPL')) {
+                        const cb = document.getElementById('role_' + role + '_ASMIPL');
+                        if (cb) cb.checked = true;
+                    }
+                    if (units.includes('ASYM')) {
+                        const cb = document.getElementById('role_' + role + '_ASYM');
+                        if (cb) cb.checked = true;
+                    }
+                }
+            });
+    });
+
+    // Live search for mappings table
+    const searchInput = document.getElementById('liveSearchInput');
+    const tableBody = document.querySelector('#mappingsTable tbody');
+    if (searchInput && tableBody) {
+        const rows = tableBody.querySelectorAll('tr');
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

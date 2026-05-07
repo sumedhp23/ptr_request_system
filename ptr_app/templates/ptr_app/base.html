@@ -1,0 +1,212 @@
+{% load static %}
+{% load auth_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tool Engineering — PTR System{% endblock %}</title>
+    <meta name="description" content="PTR / TCMR Request Management System — Tool Engineering Department">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{% static 'ptr_app/css/inter.css' %}">
+    <link rel="stylesheet" href="{% static 'ptr_app/css/material_icons.css' %}">
+    <link rel="stylesheet" href="{% static 'ptr_app/css/styles.css' %}?v=11">
+</head>
+<body>
+    <!-- ═══════════════ SIDEBAR ═══════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="material-icons-outlined brand-icon">precision_manufacturing</span>
+            <div>
+                <h1 class="brand-title">Tool Engineering</h1>
+                <span class="brand-sub">PTR System</span>
+            </div>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="user-avatar">S</div>
+            <div>
+                <span class="user-name">{{ request.user.first_name|default:request.user.username|upper }}</span>
+                <span class="user-role">
+                    {% if request.user.is_superuser %}Admin{% elif request.user|has_group:"tooling_manager" %}Tooling Manager{% else %}Requester{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'dashboard' %}" class="nav-item {% if request.path == '/dashboard/' %}active{% endif %}" data-page="dashboard">
+                <span class="material-icons-outlined">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'ptr_request' %}" class="nav-item {% if request.path == '/' %}active{% endif %}" data-page="ptr_request">
+                <span class="material-icons-outlined">description</span>
+                <span>PTR Request</span>
+            </a>
+            {% if request.user|has_group:"tooling_manager" %}
+            <a href="{% url 'manager_approval' %}" class="nav-item" data-page="manager_approval">
+                <span class="material-icons-outlined">verified</span>
+                <span>Manager Approval</span>
+            </a>
+            
+            <a href="{% url 'ptr_admin_list' %}" class="nav-item" data-page="ptr_admin">
+                <span class="material-icons-outlined">admin_panel_settings</span>
+                <span>PTR Admin</span>
+            </a>
+            {% endif %}
+
+            {% if request.user|has_group:"designer" %}
+            <a href="{% url 'designer_entry_list' %}" class="nav-item" data-page="designer_entry_list">
+                <span class="material-icons-outlined">design_services</span>
+                <span>PTR Entry</span>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'short_close' %}" class="nav-item" data-page="short_close">
+                <span class="material-icons-outlined">cancel</span>
+                <span>Short Close</span>
+            </a>
+
+            <div class="nav-separator"></div>
+
+            <a href="#" class="nav-item has-submenu {% if '/receiving-entry/' in request.path %}open{% endif %}" data-page="receiving_entry">
+                <span class="material-icons-outlined">inventory_2</span>
+                <span>Receiving Entry</span>
+                <span class="material-icons-outlined nav-arrow">chevron_right</span>
+            </a>
+            <!-- Receiving Entry Submenu Links -->
+            <div class="nav-submenu {% if '/receiving-entry' in request.path %}open{% endif %}">
+                <a href="{% url 'receiving_entry' %}" class="nav-item" data-page="receiving_entry_verification">
+                    <span>Verification</span>
+                </a>
+                <a href="{% url 'receiving_feedback' %}" class="nav-item" data-page="receiving_entry_feedback">
+                    <span>Feedback</span>
+                </a>
+            </div>
+            
+            <a href="#" class="nav-item has-submenu {% if '/preventive-maintenance/' in request.path %}open{% endif %}" data-page="preventive_maintenance">
+                <span class="material-icons-outlined">build_circle</span>
+                <span>Preventive Maintenance</span>
+                <span class="material-icons-outlined nav-arrow">chevron_right</span>
+            </a>
+            <!-- PM Submenu Links -->
+            <div class="nav-submenu {% if '/preventive-maintenance/' in request.path %}open{% endif %}">
+                <a href="{% url 'pm_plan' %}" class="nav-item" data-page="pm_plan">
+                    <span>PM PLAN</span>
+                </a>
+                <a href="{% url 'breakdown_maintenance' %}" class="nav-item" data-page="breakdown_maintenance">
+                    <span>BREAKDOWN MAINTENANCE</span>
+                </a>
+                <a href="{% url 'tool_life_extension' %}" class="nav-item" data-page="tool_life_extension">
+                    <span>Tool Life Extension</span>
+                </a>
+            </div>
+
+            <div class="nav-separator"></div>
+
+            <a href="#" class="nav-item has-submenu {% if '/tooling-admin/' in request.path %}open{% endif %}" data-page="tooling_admin">
+                <span class="material-icons-outlined">settings</span>
+                <span>Tooling Admin</span>
+                <span class="material-icons-outlined nav-arrow">chevron_right</span>
+            </a>
+            <!-- Tooling Admin Submenu Links -->
+            <div class="nav-submenu {% if '/tooling-admin/' in request.path %}open{% endif %}">
+                <a href="{% url 'ta_admin_entry' %}" class="nav-item" data-page="ta_admin_entry">
+                    <span>Admin Entry</span>
+                </a>
+                <a href="{% url 'ta_change_designer' %}" class="nav-item" data-page="ta_change_designer">
+                    <span>Change Designer</span>
+                </a>
+                <a href="{% url 'ta_supplier_resource' %}" class="nav-item" data-page="ta_supplier_resource">
+                    <span>Supplier Resource</span>
+                </a>
+                <a href="{% url 'ta_update_material' %}" class="nav-item" data-page="ta_update_material">
+                    <span>Update Material Type</span>
+                </a>
+            </div>
+            <a href="#" class="nav-item has-submenu {% if '/system-admin/' in request.path %}open{% endif %}" data-page="system_admin">
+                <span class="material-icons-outlined">security</span>
+                <span>System Admin</span>
+                <span class="material-icons-outlined nav-arrow">chevron_right</span>
+            </a>
+            <!-- System Admin Submenu Links -->
+            <div class="nav-submenu {% if '/system-admin/' in request.path %}open{% endif %}">
+                <a href="{% url 'sa_design_dashboard' %}" class="nav-item" data-page="sa_design_dashboard">
+                    <span>Design Dashboard</span>
+                </a>
+                <a href="{% url 'sa_employee_mapping' %}" class="nav-item" data-page="sa_employee_mapping">
+                    <span>Employee Mapping</span>
+                </a>
+                <a href="{% url 'sa_form_mapping' %}" class="nav-item" data-page="sa_form_mapping">
+                    <span>Form Mapping</span>
+                </a>
+            </div>
+            <a href="{% url 'reports' %}" class="nav-item {% if request.path == '/reports/' %}active{% endif %}" data-page="reports">
+                <span class="material-icons-outlined">assessment</span>
+                <span>Reports</span>
+            </a>
+            <a href="{% url 'obsolete_fixtures' %}" class="nav-item" data-page="obsolete_fixtures">
+                <span class="material-icons-outlined">delete_sweep</span>
+                <span>Obsolete Fixtures</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <span class="material-icons-outlined">menu</span>
+            </button>
+            <div class="topbar-breadcrumb">
+                {% block breadcrumb %}Home{% endblock %}
+            </div>
+            <div class="topbar-right">
+                <button class="topbar-icon-btn" aria-label="Notifications">
+                    <span class="material-icons-outlined">notifications</span>
+                    <span class="badge">3</span>
+                </button>
+                <!-- Logout Button -->
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="topbar-icon-btn" title="Logout" style="color: #ef4444; border: 1px solid #ef4444; border-radius: 4px; padding: 4px 8px;">
+                        <span class="material-icons-outlined">logout</span>
+                    </button>
+                </form>
+
+                <div class="topbar-avatar">{{ request.user.username.0|upper }}</div>
+            </div>
+        </header>
+
+        <main class="content">
+            {% if messages %}
+            <div class="alert-stack" id="alertStack">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <span class="material-icons-outlined">check_circle</span>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            <script>
+                setTimeout(function() {
+                    var stack = document.getElementById('alertStack');
+                    if (stack) {
+                        stack.style.transition = 'opacity 0.5s ease';
+                        stack.style.opacity = '0';
+                        setTimeout(function() { stack.remove(); }, 500);
+                    }
+                }, 5000);
+            </script>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="main-footer">
+            FORMAT NO: TLO-F011 &nbsp;|&nbsp; Rev No: 04 &nbsp;|&nbsp; EFFECTIVE DATE: 01/Apr/2018
+        </footer>
+    </div>
+
+    <script src="{% static 'ptr_app/js/main.js' %}?v=5"></script>
+</body>
+</html>

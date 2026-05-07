@@ -1,0 +1,106 @@
+{% extends "ptr_app/base.html" %}
+{% block title %}Tool Life Extension Detail{% endblock %}
+{% block breadcrumb %}Preventive Maintenance / Tool Life Extension / Detail{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 16px; align-items: center;">
+        <a href="{% url 'tool_life_extension' %}" class="btn btn-outline" style="border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
+            <span class="material-icons-outlined">arrow_back</span>
+        </a>
+        <h2 class="page-title" style="color: #64748b; font-weight: 500; margin: 0;">TOOL LIFE EXTEND: {{ ptr.ptrno|default:"" }}</h2>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+    
+    <!-- Form 1: Read-Only Data -->
+    <div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border);">
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+            <span style="font-size: 13px; font-weight: 600; color: #64748b;">Tool Details (Read-Only)</span>
+        </div>
+        <div style="padding: 16px;">
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">PTR No.</label>
+                <input type="text" class="form-control" value="{{ ptr.ptrno|default:'' }}" readonly style="background-color: #f1f5f9; font-weight: 500;">
+            </div>
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">TI No.</label>
+                <input type="text" class="form-control" value="{{ tino }}" readonly style="background-color: #f1f5f9;">
+            </div>
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Tool Material</label>
+                <input type="text" class="form-control" value="{{ material|default:'—' }}" readonly style="background-color: #f1f5f9;">
+            </div>
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Previous Tool Expiry Date</label>
+                <input type="text" class="form-control" value="{{ expiry_date|date:'d/m/Y' }}" readonly style="background-color: #f1f5f9; color: #dc2626; font-weight: 600;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Form 2: Input Logic -->
+    <div class="card form-card" style="padding: 0; box-shadow: none; border: 1px solid var(--clr-border);">
+        <div style="padding: 12px 16px; background-color: #f8fafc; border-bottom: 1px solid var(--clr-border);">
+            <span style="font-size: 13px; font-weight: 600; color: #0284c7;">Input Extension Details</span>
+        </div>
+        <form method="post" style="padding: 16px;">
+            {% csrf_token %}
+            
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;" class="required">Inspection Report No.</label>
+                <input type="text" name="report_no" class="form-control" required placeholder="Enter Report Number...">
+            </div>
+            
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;" class="required">Tool Life Extended (Yrs)</label>
+                <input type="number" name="extended_years" class="form-control" required placeholder="e.g. 1" min="0">
+            </div>
+
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;" class="required">Extended On</label>
+                <input type="date" name="extended_date" class="form-control" required>
+            </div>
+            
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;">Remarks</label>
+                <textarea name="remarks" class="form-control" rows="2" placeholder="Any remarks..."></textarea>
+            </div>
+            
+            <div class="form-group-compact" style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569;" class="required">Status</label>
+                <select name="status" class="form-control form-select" required>
+                    <option value="">-- Select --</option>
+                    <option value="Extended">Extended</option>
+                    <option value="Scrapped">Scrapped</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #475569;" class="required">Inspected By</label>
+                    <select name="inspector" class="form-control form-select select2" required>
+                        <option value="">-- Select --</option>
+                        {% for d in designers %}
+                        <option value="{{ d.EmpNumber }}">{{ d.EmpNumber }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group-compact">
+                    <label style="font-size: 11px; font-weight: 600; color: #475569;" class="required">Approved By</label>
+                    <select name="approver" class="form-control form-select select2" required>
+                        <option value="">-- Select --</option>
+                        {% for d in designers %}
+                        <option value="{{ d.EmpNumber }}">{{ d.EmpNumber }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <button type="button" class="btn btn-primary" onclick="alert('Submission logic is currently pending standard definition.')" style="background-color: #0284c7; border-color: #0284c7; padding: 10px 24px;">Submit Extension</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
