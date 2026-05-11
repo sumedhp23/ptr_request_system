@@ -16,8 +16,7 @@ The **Process Tool Request (PTR) System** is a comprehensive, enterprise-grade D
 
 ```mermaid
 flowchart TD
-    %% Styling
-    classDef default fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px,color:#1e293b,font-family:Inter
+    classDef default fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px,color:#1e293b
     classDef initiator fill:#e0f2fe,stroke:#38bdf8,stroke-width:2px,color:#0369a1
     classDef manager fill:#fef08a,stroke:#eab308,stroke-width:2px,color:#854d0e
     classDef designer fill:#dcfce7,stroke:#4ade80,stroke-width:2px,color:#166534
@@ -25,39 +24,50 @@ flowchart TD
     classDef maintenance fill:#ede9fe,stroke:#a78bfa,stroke-width:2px,color:#5b21b6
     classDef endstate fill:#f1f5f9,stroke:#94a3b8,stroke-width:2px,color:#475569
 
-    %% Main Flow
-    Start([Start: Tooling Need Identified]) --> S1
+    Start(["Start: Tooling Need Identified"]) --> S1
     
-    subgraph Phase 1: Request & Approval
-        S1[Status 1: Raising a New PTR<br/><i>(Initiator logs requirements)</i>]:::initiator
-        S2{Status 2: Managerial Approval<br/><i>(Manager reviews & assigns)</i>}:::manager
+    subgraph Phase1 ["Phase 1: Request & Approval"]
+        S1["Status 1: Raising a New PTR
+(Initiator logs requirements)"]:::initiator
+        S2{"Status 2: Managerial Approval
+(Manager reviews & assigns)"}:::manager
         
         S1 --> S2
-        S2 -- Rejected / Short-Closed --> SC([Short Closed]):::endstate
-        S2 -- Approved & Assigned --> S3
+        S2 -- "Rejected / Short-Closed" --> SC(["Short Closed"]):::endstate
+        S2 -- "Approved & Assigned" --> S3
     end
 
-    subgraph Phase 2: Design & Procurement
-        S3[Status 3: Designer Data Entry<br/><i>(Drawings & specs uploaded)</i>]:::designer
-        S4[Status 4: Tool Room Initialization<br/><i>(Tool Room verifies specs)</i>]:::toolroom
-        S5[Status 5 & 6: Procurement<br/><i>(Indent Tracking & POs)</i>]:::toolroom
+    subgraph Phase2 ["Phase 2: Design & Procurement"]
+        S3["Status 3: Designer Data Entry
+(Drawings & specs uploaded)"]:::designer
+        S4["Status 4: Tool Room Initialization
+(Tool Room verifies specs)"]:::toolroom
+        S5["Status 5 & 6: Procurement
+(Indent Tracking & POs)"]:::toolroom
         
         S3 --> S4
         S4 --> S5
         S5 --> S7
     end
 
-    subgraph Phase 3: Active Lifecycle & Maintenance
-        S7[Status 7: Tool Receipt (TVRN)<br/><i>(Tool physically received & Active)</i>]:::designer
+    subgraph Phase3 ["Phase 3: Active Lifecycle & Maintenance"]
+        S7["Status 7: Tool Receipt (TVRN)
+(Tool physically received & Active)"]:::designer
         
-        PM_Engine((Preventive<br/>Maintenance<br/>Engine)):::maintenance
+        PM_Engine(("Preventive
+Maintenance
+Engine")):::maintenance
         S7 --> PM_Engine
         
-        PM_Engine -.-> PM1[PM Plan Execution<br/><i>(Scheduled Inspections)</i>]:::maintenance
-        PM_Engine -.-> PM2[Breakdown Reporting<br/><i>(Unexpected Failures)</i>]:::maintenance
-        PM_Engine -.-> PM3[Tool Life Extension<br/><i>(Lifespan upgrades)</i>]:::maintenance
+        PM_Engine -.-> PM1["PM Plan Execution
+(Scheduled Inspections)"]:::maintenance
+        PM_Engine -.-> PM2["Breakdown Reporting
+(Unexpected Failures)"]:::maintenance
+        PM_Engine -.-> PM3["Tool Life Extension
+(Lifespan upgrades)"]:::maintenance
         
-        PM1 --> Hist[Automated History Card<br/><i>(PDF Generation)</i>]:::endstate
+        PM1 --> Hist["Automated History Card
+(PDF Generation)"]:::endstate
         PM2 --> Hist
         PM3 --> Hist
     end
